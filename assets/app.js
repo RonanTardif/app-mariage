@@ -9,11 +9,9 @@ async function loadPage(routePath) {
 
   setActiveNav(routePath);
 
-  // Injecte le HTML (sans essayer d'exécuter des scripts dedans)
   const html = await fetch(route.file, { cache: "no-store" }).then((r) => r.text());
   view.innerHTML = html;
 
-  // Initialise la page via un module central (fiable)
   await initPage(routePath);
 }
 
@@ -30,7 +28,7 @@ function onRouteChange() {
     view.innerHTML = `
       <div class="card"><div class="card-inner">
         <h2 class="card-title">Erreur</h2>
-        <p class="card-subtitle">Impossible de charger la page. Ouvre la console (F12) pour voir l’erreur.</p>
+        <p class="card-subtitle">Impossible de charger la page. Ouvre la console (F12) → Console.</p>
       </div></div>
     `;
   });
