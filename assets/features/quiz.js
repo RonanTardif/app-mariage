@@ -17,27 +17,64 @@ export async function initQuiz({ loadScores, saveScores }) {
     return;
   }
 
-  container.innerHTML = quiz.questions
-    .map((q, idx) => {
-      const options = q.options
-        .map(
-          (opt, j) => `
+  let currentQuestion = 0;
+  const selectedAnswers = new Array(quiz.questions.length).fill(null);
+
+  function renderQuestion() {
+    const q = quiz.questions[currentQuestion];
+    if (!q) return;
+
+    const options = q.options
+      .map((opt, j) => {
+        const checked = selectedAnswers[currentQuestion] === j ? "checked" : "";
+        return `
           <label class="list-item" style="display:flex; gap:10px; align-items:center; cursor:pointer;">
-            <input type="radio" name="q_${idx}" value="${escapeHTML(String(j))}" />
+            <input type="radio" name="current_question" value="${escapeHTML(String(j))}" ${checked} />
             <div><p class="list-title" style="margin:0;">${escapeHTML(opt)}</p></div>
           </label>
-        `
-        )
-        .join("");
+        `;
+      })
+      .join("");
 
-      return `
-        <div class="list-item">
-          <p class="list-title">${idx + 1}. ${escapeHTML(q.question)}</p>
-          <div class="list" style="margin-top:10px;">${options}</div>
+    const isFirst = currentQuestion === 0;
+    const isLast = currentQuestion === quiz.questions.length - 1;
+
+    container.innerHTML = `
+      <div class="list-item">
+        <p class="small" style="margin:0 0 8px 0;">Question ${currentQuestion + 1} / ${quiz.questions.length}</p>
+        <p class="list-title">${escapeHTML(q.question)}</p>
+        <div class="list" style="margin-top:10px;">${options}</div>
+        <div style="display:flex; gap:10px; margin-top:12px;">
+          <button type="button" id="prevQuestion" class="badge" ${isFirst ? "disabled" : ""}>← Précédente</button>
+          <button type="button" id="nextQuestion" class="badge" ${isLast ? "disabled" : ""}>Suivante →</button>
         </div>
-      `;
-    })
-    .join("");
+      </div>
+    `;
+
+    const radios = container.querySelectorAll('input[name="current_question"]');
+    radios.forEach((radio) => {
+      radio.addEventListener("change", (e) => {
+        selectedAnswers[currentQuestion] = Number(e.target.value);
+      });
+    });
+
+    const prev = document.getElementById("prevQuestion");
+    const next = document.getElementById("nextQuestion");
+
+    prev?.addEventListener("click", () => {
+      if (currentQuestion === 0) return;
+      currentQuestion -= 1;
+      renderQuestion();
+    });
+
+    next?.addEventListener("click", () => {
+      if (currentQuestion >= quiz.questions.length - 1) return;
+      currentQuestion += 1;
+      renderQuestion();
+    });
+  }
+
+  renderQuestion();
 
   submit.addEventListener("click", () => {
     const player = (nameInput.value || "").trim();
@@ -46,10 +83,11 @@ export async function initQuiz({ loadScores, saveScores }) {
         <div class="card" style="box-shadow:none;">
           <div class="card-inner">
             <h3 class="card-title">Pseudo manquant</h3>
-            <p class="card-subtitle">Renseigne ton prénom/pseudo avant de valider.</p>
+            <p class="card-subtitle">Entre ton prénom ou pseudo dans le champ au-dessus avant de valider.</p>
           </div>
         </div>
       `;
+      nameInput.focus();
       return;
     }
 
@@ -57,10 +95,10 @@ export async function initQuiz({ loadScores, saveScores }) {
     let answered = 0;
 
     quiz.questions.forEach((q, idx) => {
-      const chosen = document.querySelector(`input[name="q_${idx}"]:checked`);
-      if (!chosen) return;
+      const chosen = selectedAnswers[idx];
+      if (chosen === null) return;
       answered += 1;
-      if (Number(chosen.value) === Number(q.answer_index)) score += 1;
+      if (Number(chosen) === Number(q.answer_index)) score += 1;
     });
 
     const total = quiz.questions.length;
