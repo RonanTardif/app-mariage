@@ -320,3 +320,81 @@ button, input { font-family: inherit; }
 .badge.ok { background: rgba(155, 170, 154, 0.25); }
 .badge.warn { background: rgba(232, 191, 199, 0.28); }
 .badge.danger { background: rgba(111, 115, 119, 0.22); }
+
+.domain-map {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #f8f7f6;
+}
+
+.domain-map svg {
+  width: 100%;
+  display: block;
+}
+
+.map-zone {
+  fill: rgba(232, 191, 199, 0.2);
+  stroke: rgba(111, 115, 119, 0.55);
+  stroke-width: 2;
+  transition: fill 140ms ease, stroke 140ms ease;
+}
+
+.map-zone-label {
+  font-size: 16px;
+  font-weight: 700;
+  fill: rgba(28, 28, 28, 0.9);
+  pointer-events: none;
+}
+
+.map-hotspot {
+  cursor: pointer;
+  outline: none;
+}
+
+.map-hotspot:hover .map-zone,
+.map-hotspot:focus .map-zone,
+.map-hotspot.is-active .map-zone {
+  fill: rgba(155, 170, 154, 0.38);
+  stroke: rgba(28, 28, 28, 0.7);
+}
+
+.map-detail {
+  margin-top: 12px;
+}
+
+.map-links {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.map-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.map-shortcut {
+  cursor: pointer;
+}
+
+.map-shortcut.is-active {
+  background: rgba(155, 170, 154, 0.35);
+}
+
+.map-bg-image {
+  opacity: 0.96;
+}
+
+.domain-map.is-missing-bg {
+  border-color: rgba(232, 191, 199, 0.95);
+}
+
+.map-help {
+  margin: 8px 2px 0;
+  font-size: 12px;
+  color: rgba(28, 28, 28, 0.6);
+}
