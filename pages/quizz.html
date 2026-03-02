@@ -1,0 +1,135 @@
+<div class="card">
+  <div class="card-inner">
+    <h2 class="card-title">Quiz Ronan & Lorie</h2>
+    <p class="card-subtitle">Réponds aux questions et vois ton score. (MVP : scores stockés sur ton appareil)</p>
+
+    <div class="hr"></div>
+
+    <div class="search">
+      <input id="playerName" type="text" placeholder="Ton prénom / pseudo" autocomplete="off" />
+    </div>
+
+    <div class="hr"></div>
+
+    <div id="quizContainer" class="list"></div>
+
+    <div class="hr"></div>
+
+    <button id="submitQuiz" class="btn" type="button" style="justify-content:space-between;">
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div class="icon rose">✅</div>
+        <div class="btn-text">
+          <div class="btn-title">Valider</div>
+          <div class="btn-desc">Enregistrer mon score</div>
+        </div>
+      </div>
+      <div class="badge">→</div>
+    </button>
+
+    <div id="quizResult" style="margin-top: 12px;"></div>
+
+    <p class="small" style="margin-top: 12px;">
+      Pour la projection : ouvre <a href="#/leaderboard"><b>Leaderboard</b></a>.
+    </p>
+  </div>
+</div>
+
+<script type="module">
+  import { fetchJSON, escapeHTML, renderNotFound } from "./assets/ui.js";
+
+  const STORAGE_KEY = "mariage_quiz_scores_v1";
+
+  function loadScores() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
+  }
+  function saveScores(scores) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+  }
+
+  window.__initPage = async () => {
+    const quiz = await fetchJSON("./data/quiz.json");
+    const container = document.getElementById("quizContainer");
+    const nameInput = document.getElementById("playerName");
+    const submit = document.getElementById("submitQuiz");
+    const out = document.getElementById("quizResult");
+
+    if (!quiz?.questions?.length) {
+      container.innerHTML = renderNotFound("Quiz non configuré.");
+      return;
+    }
+
+    container.innerHTML = quiz.questions.map((q, idx) => {
+      const options = q.options.map((opt, j) => {
+        const id = `q_${idx}_${j}`;
+        return `
+          <label class="list-item" style="display:flex; gap:10px; align-items:center; cursor:pointer;">
+            <input type="radio" name="q_${idx}" value="${escapeHTML(String(j))}" id="${id}" />
+            <div>
+              <p class="list-title" style="margin:0;">${escapeHTML(opt)}</p>
+            </div>
+          </label>
+        `;
+      }).join("");
+
+      return `
+        <div class="list-item">
+          <p class="list-title">${idx + 1}. ${escapeHTML(q.question)}</p>
+          <div class="list" style="margin-top:10px;">${options}</div>
+        </div>
+      `;
+    }).join("");
+
+    submit.addEventListener("click", () => {
+      const player = (nameInput.value || "").trim();
+      if (!player) {
+        out.innerHTML = `
+          <div class="card" style="box-shadow:none;">
+            <div class="card-inner">
+              <h3 class="card-title">Pseudo manquant</h3>
+              <p class="card-subtitle">Renseigne ton prénom/pseudo avant de valider.</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      let score = 0;
+      let answered = 0;
+
+      quiz.questions.forEach((q, idx) => {
+        const chosen = document.querySelector(`input[name="q_${idx}"]:checked`);
+        if (!chosen) return;
+        answered += 1;
+        if (Number(chosen.value) === Number(q.answer_index)) score += 1;
+      });
+
+      const total = quiz.questions.length;
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
+      const ts = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+      const scores = loadScores();
+      scores.push({
+        player,
+        score,
+        total,
+        answered,
+        time: ts,
+        created_at: now.toISOString(),
+      });
+      saveScores(scores);
+
+      out.innerHTML = `
+        <div class="card flash" style="box-shadow:none;">
+          <div class="card-inner">
+            <h3 class="card-title">Score enregistré 🎉</h3>
+            <p class="card-subtitle"><b>${escapeHTML(player)}</b> : ${score}/${total} (répondu: ${answered}/${total})</p>
+            <div style="margin-top:10px;">
+              <a class="badge" href="#/leaderboard">Voir le leaderboard</a>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  };
+</script>
