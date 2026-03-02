@@ -212,18 +212,6 @@ async function initPhotos() {
 
   input.addEventListener("input", search);
 }
-  function search() {
-    const q = normalizeName(input.value);
-    if (!q) {
-      result.innerHTML = "";
-      return;
-    }
-    const matches = slots.filter((r) => normalizeName(r.full_name).includes(q));
-    render(matches);
-  }
-
-  input.addEventListener("input", search);
-}
 
 async function initQuiz() {
   const quiz = await fetchJSON("./data/quiz.json");
