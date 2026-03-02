@@ -1,42 +1,102 @@
 <div class="card">
   <div class="card-inner">
     <h2 class="card-title">Programme</h2>
-    <p class="card-subtitle">Les moments clés du week-end (MVP).</p>
+    <p class="card-subtitle">Les moments clés du week-end, en un coup d'œil.</p>
+
+    <div class="programme-hero">
+      <div class="programme-hero-label">Prochain moment</div>
+      <div class="programme-hero-main">
+        <span class="programme-hero-time">17h00</span>
+        <span class="programme-hero-title">Vin d’Honneur</span>
+      </div>
+      <p class="programme-hero-text">Rendez-vous à l’Orangerie pour lancer la soirée 🥂</p>
+    </div>
 
     <div class="hr"></div>
 
-    <div class="list">
-      <div class="list-item">
-        <p class="list-title">Samedi — arrivée</p>
-        <p class="list-text">Coin rafraîchissement ouvert à votre arrivée sur le domaine.</p>
-      </div>
+    <section class="programme-day" aria-labelledby="samedi-title">
+      <h3 id="samedi-title" class="programme-day-title">Samedi</h3>
 
-      <div class="list-item">
-        <p class="list-title">Vin d’Honneur</p>
-        <p class="list-text"><b>17h → 20h</b></p>
-      </div>
+      <div class="timeline">
+        <article class="timeline-item">
+          <div class="timeline-time">Dès arrivée</div>
+          <div class="timeline-dot" aria-hidden="true"></div>
+          <div class="timeline-card">
+            <p class="list-title">Accueil au domaine</p>
+            <p class="list-text">Coin rafraîchissement ouvert à votre arrivée.</p>
+            <div class="programme-meta">
+              <span class="badge">📍 Domaine</span>
+            </div>
+          </div>
+        </article>
 
-      <div class="list-item">
-        <p class="list-title">Soirée à l’Orangerie</p>
-        <p class="list-text"><b>À partir de 20h</b></p>
-      </div>
+        <article class="timeline-item timeline-item-featured">
+          <div class="timeline-time">17h → 20h</div>
+          <div class="timeline-dot" aria-hidden="true"></div>
+          <div class="timeline-card">
+            <p class="list-title">Vin d’Honneur</p>
+            <p class="list-text">Cocktail, premières photos et retrouvailles.</p>
+            <div class="programme-meta">
+              <span class="badge">🍸 Orangerie</span>
+              <span class="badge">✨ Smart chic</span>
+            </div>
+          </div>
+        </article>
 
-      <div class="list-item">
-        <p class="list-title">After</p>
-        <p class="list-text"><b>Après 4h</b> : direction le <b>Saloon</b>.</p>
-      </div>
+        <article class="timeline-item">
+          <div class="timeline-time">Dès 20h</div>
+          <div class="timeline-dot" aria-hidden="true"></div>
+          <div class="timeline-card">
+            <p class="list-title">Soirée à l’Orangerie</p>
+            <p class="list-text">Dîner, musique et dancefloor jusqu’au bout de la nuit.</p>
+            <div class="programme-meta">
+              <span class="badge">🎶 DJ Set</span>
+            </div>
+          </div>
+        </article>
 
-      <div class="list-item">
-        <p class="list-title">Dimanche — Brunch</p>
-        <p class="list-text"><b>11h</b> au <b>Saloon</b>.</p>
+        <article class="timeline-item">
+          <div class="timeline-time">Après 4h</div>
+          <div class="timeline-dot" aria-hidden="true"></div>
+          <div class="timeline-card">
+            <p class="list-title">After au Saloon</p>
+            <p class="list-text">Pour les plus motivés : on continue au Saloon 🌙</p>
+            <div class="programme-meta">
+              <span class="badge">🤠 Saloon</span>
+            </div>
+          </div>
+        </article>
       </div>
+    </section>
 
-      <div class="list-item">
-        <p class="list-title">Piscine</p>
-        <p class="list-text">
-          Fermée samedi. <b>Ouverture dimanche 10h</b>. <b>Pool Party dimanche 14h</b>.
-        </p>
+    <section class="programme-day" aria-labelledby="dimanche-title">
+      <h3 id="dimanche-title" class="programme-day-title">Dimanche</h3>
+
+      <div class="timeline">
+        <article class="timeline-item">
+          <div class="timeline-time">11h</div>
+          <div class="timeline-dot" aria-hidden="true"></div>
+          <div class="timeline-card">
+            <p class="list-title">Brunch</p>
+            <p class="list-text">On se retrouve au Saloon pour recharger les batteries 🥐</p>
+            <div class="programme-meta">
+              <span class="badge">☕ Saloon</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="timeline-item">
+          <div class="timeline-time">10h puis 14h</div>
+          <div class="timeline-dot" aria-hidden="true"></div>
+          <div class="timeline-card">
+            <p class="list-title">Piscine & Pool Party</p>
+            <p class="list-text">Piscine ouverte à 10h, puis pool party à partir de 14h 🏖️</p>
+            <div class="programme-meta">
+              <span class="badge">👙 Dimanche only</span>
+            </div>
+          </div>
+        </article>
       </div>
-    </div>
+    </section>
   </div>
 </div>
