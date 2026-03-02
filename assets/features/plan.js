@@ -1,5 +1,7 @@
 import { fetchJSON, escapeHTML } from "../ui.js";
 
+const DEFAULT_MAP_BG = "./assets/plan-domaine.jpg";
+
 const MAP_SPOTS = [
   { id: "gites", label: "Gîtes", points: "318,188 446,172 532,229 477,295 296,274" },
   { id: "chapelle", label: "Chapelle", points: "570,88 640,75 672,126 608,155 558,128" },
@@ -13,17 +15,14 @@ const MAP_SPOTS = [
   { id: "lac", label: "Lac", points: "26,98 206,84 236,264 72,278" }
 ];
 
-function renderSVG() {
+function renderSVG(backgroundSrc) {
   return `
     <svg viewBox="0 0 1000 720" role="img" aria-labelledby="mapTitle mapDesc">
       <title id="mapTitle">Plan du domaine</title>
       <desc id="mapDesc">Cliquez sur les zones marquées pour ouvrir le détail du lieu.</desc>
 
       <rect x="0" y="0" width="1000" height="720" fill="#f8f7f6" />
-      <path d="M0,700 C160,615 240,560 330,470 C450,350 470,260 570,100" fill="none" stroke="#d6d6d6" stroke-width="20" stroke-linecap="round" />
-      <path d="M170,332 L390,328 L438,523 L252,566 Z" fill="#efefef" stroke="#d0d0d0" />
-      <path d="M545,324 L735,328 L782,426 L558,431 Z" fill="#efefef" stroke="#d0d0d0" />
-      <path d="M698,540 L948,560 L916,658 L680,629 Z" fill="#efefef" stroke="#d0d0d0" />
+      <image class="map-bg-image" href="${escapeHTML(backgroundSrc)}" x="0" y="0" width="1000" height="720" preserveAspectRatio="xMidYMid slice" />
 
       ${MAP_SPOTS.map(
         (spot) => `
@@ -62,7 +61,14 @@ export async function initPlan() {
   const shortcutsContainer = document.getElementById("placeShortcuts");
   if (!mapContainer || !detailContainer || !shortcutsContainer) return;
 
-  mapContainer.innerHTML = renderSVG();
+  const backgroundSrc = mapContainer.dataset.mapImage || DEFAULT_MAP_BG;
+  mapContainer.innerHTML = renderSVG(backgroundSrc);
+
+  const bgImage = mapContainer.querySelector(".map-bg-image");
+  if (bgImage) {
+    bgImage.addEventListener("error", () => mapContainer.classList.add("is-missing-bg"));
+    bgImage.addEventListener("load", () => mapContainer.classList.remove("is-missing-bg"));
+  }
 
   const mappedIds = new Set(MAP_SPOTS.map((spot) => spot.id));
   const shortcuts = places.filter((p) => !mappedIds.has(p.id) && p.id === "foret");

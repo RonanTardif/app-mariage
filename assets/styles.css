@@ -384,3 +384,17 @@ button, input { font-family: inherit; }
 .map-shortcut.is-active {
   background: rgba(155, 170, 154, 0.35);
 }
+
+.map-bg-image {
+  opacity: 0.96;
+}
+
+.domain-map.is-missing-bg {
+  border-color: rgba(232, 191, 199, 0.95);
+}
+
+.map-help {
+  margin: 8px 2px 0;
+  font-size: 12px;
+  color: rgba(28, 28, 28, 0.6);
+}
