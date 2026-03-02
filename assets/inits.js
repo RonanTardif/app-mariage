@@ -307,13 +307,7 @@ async function initPhotos() {
     try {
       setStatus("🔄 Chargement des données…");
 
-      let data;
-      try {
-        data = await fetchJSON(API_URL);
-      } catch (_) {
-        // fallback GitHub Pages
-        data = await fetchJSONP(API_URL);
-      }
+     const data = await fetchJSONP(API_URL);
 
       if (!data.people || !data.groups || !data.slots) {
         throw new Error("JSON incomplet: people/groups/slots manquants");
