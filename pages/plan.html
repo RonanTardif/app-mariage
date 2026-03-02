@@ -8,35 +8,3 @@
     <div id="placesList" class="list"></div>
   </div>
 </div>
-
-<script type="module">
-  import { fetchJSON, escapeHTML } from "./assets/ui.js";
-
-  window.__initPage = async () => {
-    const places = await fetchJSON("./data/places.json");
-    const container = document.getElementById("placesList");
-
-    container.innerHTML = places
-      .map((p) => {
-        const extra = p.links?.length
-          ? `<div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-              ${p.links
-                .map(
-                  (l) =>
-                    `<a class="badge" href="${escapeHTML(l.href)}">${escapeHTML(l.label)}</a>`
-                )
-                .join("")}
-            </div>`
-          : "";
-
-        return `
-          <div class="list-item">
-            <p class="list-title">${escapeHTML(p.title)}</p>
-            <p class="list-text">${escapeHTML(p.description)}</p>
-            ${extra}
-          </div>
-        `;
-      })
-      .join("");
-  };
-</script>
