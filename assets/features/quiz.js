@@ -7,10 +7,11 @@ function pad(n) {
 export async function initQuiz({ loadScores, saveScores }) {
   const quiz = await fetchJSON("./data/quiz.json");
   const container = document.getElementById("quizContainer");
+  const nameStep = document.getElementById("playerNameStep");
   const nameInput = document.getElementById("playerName");
   const submit = document.getElementById("submitQuiz");
   const out = document.getElementById("quizResult");
-  if (!container || !nameInput || !submit || !out) return;
+  if (!container || !nameStep || !nameInput || !submit || !out) return;
 
   if (!quiz?.questions?.length) {
     container.innerHTML = renderNotFound("Quiz non configuré.");
@@ -21,33 +22,37 @@ export async function initQuiz({ loadScores, saveScores }) {
   const selectedAnswers = new Array(quiz.questions.length).fill(null);
 
   function renderQuestion() {
-    const q = quiz.questions[currentQuestion];
-    if (!q) return;
+    if (currentQuestion >= quiz.questions.length) {
+      container.innerHTML = `
+        <div class="list-item">
+          <p class="list-title">Quiz terminé 🎉</p>
+          <p class="small" style="margin:8px 0 0 0;">Entre ton prénom / pseudo ci-dessous, puis clique sur "Valider".</p>
+        </div>
+      `;
+      nameStep.style.display = "flex";
+      submit.disabled = false;
+      nameInput.focus();
+      return;
+    }
 
+    const q = quiz.questions[currentQuestion];
     const options = q.options
-      .map((opt, j) => {
-        const checked = selectedAnswers[currentQuestion] === j ? "checked" : "";
-        return `
+      .map(
+        (opt, j) => `
           <label class="list-item" style="display:flex; gap:10px; align-items:center; cursor:pointer;">
-            <input type="radio" name="current_question" value="${escapeHTML(String(j))}" ${checked} />
+            <input type="radio" name="current_question" value="${escapeHTML(String(j))}" />
             <div><p class="list-title" style="margin:0;">${escapeHTML(opt)}</p></div>
           </label>
-        `;
-      })
+        `
+      )
       .join("");
-
-    const isFirst = currentQuestion === 0;
-    const isLast = currentQuestion === quiz.questions.length - 1;
 
     container.innerHTML = `
       <div class="list-item">
         <p class="small" style="margin:0 0 8px 0;">Question ${currentQuestion + 1} / ${quiz.questions.length}</p>
         <p class="list-title">${escapeHTML(q.question)}</p>
         <div class="list" style="margin-top:10px;">${options}</div>
-        <div style="display:flex; gap:10px; margin-top:12px;">
-          <button type="button" id="prevQuestion" class="badge" ${isFirst ? "disabled" : ""}>← Précédente</button>
-          <button type="button" id="nextQuestion" class="badge" ${isLast ? "disabled" : ""}>Suivante →</button>
-        </div>
+        <p class="small" style="margin-top:10px;">Le quiz passera automatiquement à la question suivante.</p>
       </div>
     `;
 
@@ -55,22 +60,9 @@ export async function initQuiz({ loadScores, saveScores }) {
     radios.forEach((radio) => {
       radio.addEventListener("change", (e) => {
         selectedAnswers[currentQuestion] = Number(e.target.value);
+        currentQuestion += 1;
+        renderQuestion();
       });
-    });
-
-    const prev = document.getElementById("prevQuestion");
-    const next = document.getElementById("nextQuestion");
-
-    prev?.addEventListener("click", () => {
-      if (currentQuestion === 0) return;
-      currentQuestion -= 1;
-      renderQuestion();
-    });
-
-    next?.addEventListener("click", () => {
-      if (currentQuestion >= quiz.questions.length - 1) return;
-      currentQuestion += 1;
-      renderQuestion();
     });
   }
 
@@ -83,7 +75,7 @@ export async function initQuiz({ loadScores, saveScores }) {
         <div class="card" style="box-shadow:none;">
           <div class="card-inner">
             <h3 class="card-title">Pseudo manquant</h3>
-            <p class="card-subtitle">Entre ton prénom ou pseudo dans le champ au-dessus avant de valider.</p>
+            <p class="card-subtitle">Entre ton prénom ou pseudo avant de valider.</p>
           </div>
         </div>
       `;
@@ -127,5 +119,7 @@ export async function initQuiz({ loadScores, saveScores }) {
         </div>
       </div>
     `;
+
+    submit.disabled = true;
   });
 }
