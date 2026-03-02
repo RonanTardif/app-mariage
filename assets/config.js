@@ -1,4 +1,4 @@
-export const WHATSAPP_LINK = "https://wa.me/";
+export const WHATSAPP_LINK = "https://chat.whatsapp.com/LTgk0slmdpC9DKPaittyaY?mode=gi_t";
 
 export const ROOMS_API =
   "https://script.google.com/macros/s/AKfycbwZopPyM1mSWliuEMVI0D24v1GCHqSYEmcmeaJTMwQ9MmxxML4Hxwi63d2UDK06Xsu9uw/exec?path=rooms";
