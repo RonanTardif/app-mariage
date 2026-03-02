@@ -39,7 +39,7 @@ export function escapeHTML(str) {
 
 export function renderNotFound(message) {
   return `
-    <div class="card">
+    <div class="card" style="box-shadow:none;">
       <div class="card-inner">
         <h2 class="card-title">Oups</h2>
         <p class="card-subtitle">${escapeHTML(message)}</p>
