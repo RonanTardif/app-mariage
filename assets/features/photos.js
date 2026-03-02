@@ -1,6 +1,6 @@
 import { normalizeName, escapeHTML } from "../ui.js";
-import { fetchJSONP } from "../jsonp.js";
-import { PHOTOS_API, PHOTOS_REFRESH_MS } from "../config.js";
+import { fetchPhotosData, getCachedPhotosData } from "../data-cache.js";
+import { PHOTOS_REFRESH_MS } from "../config.js";
 
 function badgeClass(status) {
   const s = (status || "").toUpperCase();
@@ -67,8 +67,21 @@ function nowHHMM() {
   return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 }
 
+function preparePeopleIndex(dataStore, index) {
+  return (dataStore.people || []).map((person) => ({
+    person,
+    searchText: normalizeName(person.search_text || person.display_name),
+    groupsText: personGroups(person, index.groupsById)
+      .map((group) => group.group_name)
+      .slice(0, 2)
+      .join(" • "),
+  }));
+}
+
 export async function initPhotos() {
   let dataStore = null;
+  let dataIndex = null;
+  let peopleIndex = [];
   let selectedPersonId = null;
   let refreshTimer = null;
 
@@ -88,6 +101,12 @@ export async function initPhotos() {
 
   function setStatus(msg) {
     statusLineEl.textContent = msg;
+  }
+
+  function applyData(data) {
+    dataStore = data;
+    dataIndex = buildIndex(data);
+    peopleIndex = preparePeopleIndex(data, dataIndex);
   }
 
   function stopAutoRefresh() {
@@ -111,13 +130,11 @@ export async function initPhotos() {
 
     resultsEl.style.display = "grid";
 
-    const index = buildIndex(dataStore);
-
-    const matches = (dataStore.people || [])
-      .map((p) => {
-        const st = normalizeName(p.search_text || p.display_name);
-        return { p, score: st.includes(q) ? st.indexOf(q) : -1 };
-      })
+    const matches = peopleIndex
+      .map((entry) => ({
+        ...entry,
+        score: entry.searchText.includes(q) ? entry.searchText.indexOf(q) : -1,
+      }))
       .filter((x) => x.score >= 0)
       .sort((a, b) => a.score - b.score)
       .slice(0, 12);
@@ -133,21 +150,19 @@ export async function initPhotos() {
     }
 
     for (const m of matches) {
-      const p = m.p;
-      const groups = personGroups(p, index.groupsById).map((g) => g.group_name).slice(0, 2);
-      const groupsText = groups.length ? groups.join(" • ") : "";
+      const person = m.person;
 
       const div = document.createElement("div");
       div.className = "list-item";
       div.style.cursor = "pointer";
       div.innerHTML = `
-        <p class="list-title">${escapeHTML(p.display_name)}</p>
-        <p class="list-text">${escapeHTML(groupsText)}</p>
+        <p class="list-title">${escapeHTML(person.display_name)}</p>
+        <p class="list-text">${escapeHTML(m.groupsText)}</p>
       `;
 
       div.addEventListener("click", () => {
-        selectedPersonId = p.person_id;
-        searchEl.value = p.display_name;
+        selectedPersonId = person.person_id;
+        searchEl.value = person.display_name;
         resultsEl.style.display = "none";
         renderProfile();
       });
@@ -157,13 +172,12 @@ export async function initPhotos() {
   }
 
   function renderProfile() {
-    if (!dataStore || !selectedPersonId) return;
+    if (!dataStore || !selectedPersonId || !dataIndex) return;
 
     const person = (dataStore.people || []).find((p) => String(p.person_id) === String(selectedPersonId));
     if (!person) return;
 
-    const index = buildIndex(dataStore);
-    const slots = personSlots(person, index);
+    const slots = personSlots(person, dataIndex);
 
     profileNameEl.textContent = person.display_name;
     updatedAtEl.textContent = `Mis à jour : ${nowHHMM()}`;
@@ -198,21 +212,16 @@ export async function initPhotos() {
     profileEl.style.display = "block";
   }
 
-  async function fetchData() {
-    if (!PHOTOS_API) {
-      setStatus("⚠️ API_URL manquant");
-      return;
-    }
-
+  async function fetchData({ forceRefresh = false } = {}) {
     try {
       setStatus("🔄 Chargement des données…");
-      const data = await fetchJSONP(PHOTOS_API);
+      const data = await fetchPhotosData({ forceRefresh });
 
-      if (!data.people || !data.groups || !data.slots) {
+      if (!data?.people || !data?.groups || !data?.slots) {
         throw new Error("JSON incomplet: people/groups/slots manquants");
       }
 
-      dataStore = data;
+      applyData(data);
 
       const serverTime = data.updated_at
         ? new Date(data.updated_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
@@ -247,7 +256,7 @@ export async function initPhotos() {
 
   if (refreshBtn) {
     refreshBtn.addEventListener("click", () => {
-      fetchData();
+      fetchData({ forceRefresh: true });
     });
   }
 
@@ -255,6 +264,14 @@ export async function initPhotos() {
     const within = e.target === searchEl || resultsEl.contains(e.target);
     if (!within) resultsEl.style.display = "none";
   });
+
+  const cachedData = getCachedPhotosData();
+  if (cachedData?.people && cachedData?.groups && cachedData?.slots) {
+    applyData(cachedData);
+    setStatus("⚡ Données en cache chargées");
+    renderResults(searchEl.value);
+    renderProfile();
+  }
 
   await fetchData();
   startAutoRefresh();
