@@ -1,6 +1,7 @@
 import { fetchJSON, escapeHTML } from "../ui.js";
 
 const DEFAULT_MAP_BG = "./assets/plan-domaine.jpg";
+const PLACES_PATH = "./data/places.json";
 
 const MAP_SPOTS = [
   { id: "gites", label: "Gîtes", points: "318,188 446,172 532,229 477,295 296,274" },
@@ -15,8 +16,37 @@ const MAP_SPOTS = [
   { id: "lac", label: "Lac", points: "26,98 206,84 236,264 72,278" }
 ];
 
+const planWarmupState = {
+  placesPromise: null,
+  preloadedBackgrounds: new Set(),
+  svgMarkupByBackground: new Map(),
+};
+
+function loadPlacesData() {
+  if (!planWarmupState.placesPromise) {
+    planWarmupState.placesPromise = fetchJSON(PLACES_PATH).catch((error) => {
+      planWarmupState.placesPromise = null;
+      throw error;
+    });
+  }
+
+  return planWarmupState.placesPromise;
+}
+
+function preloadBackground(backgroundSrc) {
+  if (!backgroundSrc || planWarmupState.preloadedBackgrounds.has(backgroundSrc)) return;
+
+  planWarmupState.preloadedBackgrounds.add(backgroundSrc);
+  const img = new Image();
+  img.decoding = "async";
+  img.src = backgroundSrc;
+}
+
 function renderSVG(backgroundSrc) {
-  return `
+  const cachedMarkup = planWarmupState.svgMarkupByBackground.get(backgroundSrc);
+  if (cachedMarkup) return cachedMarkup;
+
+  const markup = `
     <svg viewBox="0 0 1000 720" role="img" aria-labelledby="mapTitle mapDesc">
       <title id="mapTitle">Plan du domaine</title>
       <desc id="mapDesc">Cliquez sur les zones marquées pour ouvrir le détail du lieu.</desc>
@@ -34,6 +64,9 @@ function renderSVG(backgroundSrc) {
       ).join("")}
     </svg>
   `;
+
+  planWarmupState.svgMarkupByBackground.set(backgroundSrc, markup);
+  return markup;
 }
 
 function renderDetail(place) {
@@ -52,8 +85,14 @@ function renderDetail(place) {
   `;
 }
 
+export function warmupPlanAssets() {
+  preloadBackground(DEFAULT_MAP_BG);
+  renderSVG(DEFAULT_MAP_BG);
+  return loadPlacesData();
+}
+
 export async function initPlan() {
-  const places = await fetchJSON("./data/places.json");
+  const places = await loadPlacesData();
   const byId = new Map(places.map((p) => [p.id, p]));
 
   const mapContainer = document.getElementById("domainMap");
@@ -62,6 +101,7 @@ export async function initPlan() {
   if (!mapContainer || !detailContainer || !shortcutsContainer) return;
 
   const backgroundSrc = mapContainer.dataset.mapImage || DEFAULT_MAP_BG;
+  preloadBackground(backgroundSrc);
   mapContainer.innerHTML = renderSVG(backgroundSrc);
 
   const bgImage = mapContainer.querySelector(".map-bg-image");
