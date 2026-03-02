@@ -1,0 +1,31 @@
+<div class="card">
+  <div class="card-inner">
+    <h2 class="card-title">Rejoindre le WhatsApp</h2>
+    <p class="card-subtitle">
+      Problème pendant le mariage ? L’équipe orga se fera un plaisir de vous aider.
+      Bloqué à votre hôtel ? Besoin d’un lift pour la gare ? C’est ici 👇
+    </p>
+
+    <div class="hr"></div>
+
+    <a id="waBtn" class="btn" href="#" target="_blank" rel="noopener">
+      <div class="icon rose">💬</div>
+      <div class="btn-text">
+        <div class="btn-title">Ouvrir WhatsApp</div>
+        <div class="btn-desc">Canal / groupe mariage</div>
+      </div>
+    </a>
+
+    <p class="small" style="margin-top: 12px;">
+      Remplace le lien WhatsApp dans le fichier <b>pages/whatsapp.html</b>.
+    </p>
+  </div>
+</div>
+
+<script type="module">
+  window.__initPage = async () => {
+    // TODO: mets ton vrai lien ici (invite de groupe/canal)
+    const WHATSAPP_LINK = "https://wa.me/";
+    document.getElementById("waBtn").href = WHATSAPP_LINK;
+  };
+</script>
