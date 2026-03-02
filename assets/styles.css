@@ -1,5 +1,4 @@
 :root {
-  /* Palette mariage */
   --rose: #e8bfc7; /* rose poudré */
   --sage: #9baa9a; /* vert sauge */
   --gray: #6f7377; /* gris */
@@ -44,9 +43,7 @@ button, input { font-family: inherit; }
   backdrop-filter: blur(10px);
   background: rgba(251, 250, 249, 0.72);
   border-bottom: 1px solid var(--border);
-}
 
-.topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
