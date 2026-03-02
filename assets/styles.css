@@ -444,47 +444,37 @@ button, input { font-family: inherit; }
 }
 
 .timeline {
-  position: relative;
   display: grid;
   gap: 10px;
-}
-.timeline::before {
-  content: "";
-  position: absolute;
-  left: 94px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: rgba(155, 170, 154, 0.3);
 }
 .timeline-item {
   display: grid;
-  grid-template-columns: 84px 20px 1fr;
-  gap: 10px;
-  align-items: start;
+  gap: 6px;
 }
 .timeline-time {
-  padding-top: 9px;
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  padding: 5px 10px;
   font-size: 12px;
   font-weight: 900;
-  color: rgba(28, 28, 28, 0.65);
-  text-align: right;
+  color: rgba(28, 28, 28, 0.75);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(155, 170, 154, 0.12);
 }
 .timeline-dot {
-  margin-top: 14px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--sage);
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 2px rgba(155, 170, 154, 0.25);
-  z-index: 1;
+  display: none;
 }
 .timeline-card {
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.92);
   border-radius: var(--radius);
   padding: 12px;
+}
+.timeline-item-featured .timeline-time {
+  background: rgba(232, 191, 199, 0.2);
+  border-color: rgba(232, 191, 199, 0.55);
 }
 .timeline-item-featured .timeline-card {
   border-color: rgba(232, 191, 199, 0.7);
@@ -497,7 +487,51 @@ button, input { font-family: inherit; }
   gap: 6px;
 }
 
-@media (max-width: 560px) {
-  .timeline::before { left: 77px; }
-  .timeline-item { grid-template-columns: 68px 18px 1fr; }
+@media (min-width: 720px) {
+  .timeline {
+    position: relative;
+  }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 94px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(155, 170, 154, 0.3);
+  }
+  .timeline-item {
+    grid-template-columns: 84px 20px 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+  .timeline-time {
+    padding: 9px 0 0;
+    border: 0;
+    background: transparent;
+    border-radius: 0;
+    width: auto;
+    text-align: right;
+    justify-content: flex-end;
+  }
+  .timeline-dot {
+    display: block;
+    margin-top: 14px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--sage);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px rgba(155, 170, 154, 0.25);
+    z-index: 1;
+  }
+  .timeline-item-featured .timeline-time {
+    background: transparent;
+    border-color: transparent;
+  }
+}
+
+@media (max-width: 420px) {
+  .programme-hero-time { font-size: 20px; }
+  .programme-hero-title { font-size: 16px; }
 }
