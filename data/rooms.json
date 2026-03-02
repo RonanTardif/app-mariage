@@ -1,0 +1,20 @@
+[
+  {
+    "full_name": "Alice Ballot-Léna",
+    "building": "Château",
+    "room_name": "Chambre Magnolia",
+    "notes": "Étage 1 — lit double"
+  },
+  {
+    "full_name": "Alban Reboul",
+    "building": "Gîte",
+    "room_name": "Gîte 2 — Chambre 3",
+    "notes": "Lit double"
+  },
+  {
+    "full_name": "Anaïs Jammes",
+    "building": "Gîte",
+    "room_name": "Gîte 1 — Chambre 2",
+    "notes": "Lit double"
+  }
+]
