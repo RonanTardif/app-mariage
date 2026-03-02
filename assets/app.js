@@ -9,7 +9,11 @@ async function loadPage(routePath) {
 
   setActiveNav(routePath);
 
-  const html = await fetch(route.file, { cache: "no-store" }).then((r) => r.text());
+  const htmlRes = await fetch(route.file, { cache: "no-store" });
+  if (!htmlRes.ok) {
+    throw new Error(`FETCH_FAIL: ${route.file} (HTTP ${htmlRes.status})`);
+  }
+  const html = await htmlRes.text();
   view.innerHTML = html;
 
   await initPage(routePath);
@@ -25,10 +29,14 @@ function onRouteChange() {
   loadPage(routePath).catch((e) => {
     console.error(e);
     const view = document.getElementById("view");
+    const msg = String(e?.message || e);
     view.innerHTML = `
       <div class="card"><div class="card-inner">
         <h2 class="card-title">Erreur</h2>
-        <p class="card-subtitle">Impossible de charger la page. Ouvre la console (F12) → Console.</p>
+        <p class="card-subtitle">Détail : <b>${msg.replaceAll("<","&lt;")}</b></p>
+        <p class="small" style="margin-top:10px;">
+          Astuce: vérifie que le fichier existe bien dans le repo (même orthographe / même MAJ/min).
+        </p>
       </div></div>
     `;
   });
