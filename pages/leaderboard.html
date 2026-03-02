@@ -1,0 +1,104 @@
+<div class="card">
+  <div class="card-inner projection">
+    <h2 class="big-title">Quiz Ronan & Lorie 🏆</h2>
+    <p class="big-sub">Top 10 — Dernière mise à jour : <b id="lbTime">--:--</b></p>
+
+    <div class="hr"></div>
+
+    <table class="table" aria-label="Leaderboard">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Pseudo</th>
+          <th>Score</th>
+          <th>Heure</th>
+        </tr>
+      </thead>
+      <tbody id="lbBody"></tbody>
+    </table>
+
+    <div class="hr"></div>
+
+    <div class="grid two">
+      <button id="resetScores" class="btn" type="button">
+        <div class="icon gray">🧹</div>
+        <div class="btn-text">
+          <div class="btn-title">Reset local</div>
+          <div class="btn-desc">Efface les scores sur cet appareil</div>
+        </div>
+      </button>
+
+      <a class="btn" href="#/quiz">
+        <div class="icon rose">🎯</div>
+        <div class="btn-text">
+          <div class="btn-title">Jouer</div>
+          <div class="btn-desc">Retour au quiz</div>
+        </div>
+      </a>
+    </div>
+
+    <p class="small" style="margin-top: 12px;">
+      Pour un “live” multi-téléphones, il faudrait un backend. MVP = localStorage.
+    </p>
+  </div>
+</div>
+
+<script type="module">
+  const STORAGE_KEY = "mariage_quiz_scores_v1";
+
+  function loadScores() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
+  }
+  function saveScores(scores) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+  }
+
+  function setTime() {
+    const el = document.getElementById("lbTime");
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    el.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+
+  function render() {
+    setTime();
+    const body = document.getElementById("lbBody");
+    const scores = loadScores();
+
+    const sorted = scores
+      .slice()
+      .sort((a, b) => (b.score - a.score) || (new Date(b.created_at) - new Date(a.created_at)))
+      .slice(0, 10);
+
+    body.innerHTML = sorted.map((s, i) => `
+      <tr>
+        <td><b>${i + 1}</b></td>
+        <td>${String(s.player || "").replaceAll("<", "&lt;")}</td>
+        <td><b>${s.score}/${s.total}</b></td>
+        <td>${String(s.time || "")}</td>
+      </tr>
+    `).join("");
+
+    // Flash si nouveau score (simple: compare longueur)
+    const lastCount = Number(sessionStorage.getItem("lb_count") || "0");
+    if (scores.length > lastCount) {
+      document.querySelector(".card")?.classList.add("flash");
+      setTimeout(() => document.querySelector(".card")?.classList.remove("flash"), 800);
+    }
+    sessionStorage.setItem("lb_count", String(scores.length));
+  }
+
+  window.__initPage = async () => {
+    render();
+    setInterval(render, 3000);
+
+    window.addEventListener("storage", (e) => {
+      if (e.key === STORAGE_KEY) render();
+    });
+
+    document.getElementById("resetScores").addEventListener("click", () => {
+      saveScores([]);
+      render();
+    });
+  };
+</script>
