@@ -7,11 +7,11 @@ function pad(n) {
 export async function initQuiz({ loadScores, saveScores }) {
   const quiz = await fetchJSON("./data/quiz.json");
   const container = document.getElementById("quizContainer");
-  const nameStep = document.getElementById("playerNameStep");
+  const finalStep = document.getElementById("finalStep");
   const nameInput = document.getElementById("playerName");
   const submit = document.getElementById("submitQuiz");
   const out = document.getElementById("quizResult");
-  if (!container || !nameStep || !nameInput || !submit || !out) return;
+  if (!container || !finalStep || !nameInput || !submit || !out) return;
 
   if (!quiz?.questions?.length) {
     container.innerHTML = renderNotFound("Quiz non configuré.");
@@ -26,11 +26,10 @@ export async function initQuiz({ loadScores, saveScores }) {
       container.innerHTML = `
         <div class="list-item">
           <p class="list-title">Quiz terminé 🎉</p>
-          <p class="small" style="margin:8px 0 0 0;">Entre ton prénom / pseudo ci-dessous, puis clique sur "Valider".</p>
+          <p class="small" style="margin:8px 0 0 0;">Entre ton prénom / pseudo ci-dessous, puis clique sur "Envoyer".</p>
         </div>
       `;
-      nameStep.style.display = "flex";
-      submit.disabled = false;
+      finalStep.style.display = "block";
       nameInput.focus();
       return;
     }
@@ -75,7 +74,7 @@ export async function initQuiz({ loadScores, saveScores }) {
         <div class="card" style="box-shadow:none;">
           <div class="card-inner">
             <h3 class="card-title">Pseudo manquant</h3>
-            <p class="card-subtitle">Entre ton prénom ou pseudo avant de valider.</p>
+            <p class="card-subtitle">Entre ton prénom ou pseudo avant d'envoyer.</p>
           </div>
         </div>
       `;
