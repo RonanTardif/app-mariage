@@ -45,7 +45,8 @@ async function initPlan() {
 
 async function initChambre() {
   const ROOMS_API =
-    "https://script.google.com/macros/s/TON_ID/exec?path=rooms";
+    "https://script.google.com/macros/s/AKfycbwZopPyM1mSWliuEMVI0D24v1GCHqSYEmcmeaJTMwQ9MmxxML4Hxwi63d2UDK06Xsu9uw/exec?path=rooms";
+  
 
   const input = document.getElementById("roomSearch");
   const result = document.getElementById("roomResult");
@@ -133,7 +134,7 @@ async function initChambre() {
 async function initPhotos() {
   // Mets ton URL Apps Script ici
   const API_URL =
-    "https://script.google.com/macros/s/AKfycbx8m_5UUprv6tmpcCQ1jFHbrCbBo4nBu7BlmNIgi5xlOBgEuJYYtCX6vCKYMVWBtk42rA/exec?path=data";
+    "https://script.google.com/macros/s/AKfycbwZopPyM1mSWliuEMVI0D24v1GCHqSYEmcmeaJTMwQ9MmxxML4Hxwi63d2UDK06Xsu9uw/exec/exec?path=data";
 
 
   const REFRESH_MS = 15000;
