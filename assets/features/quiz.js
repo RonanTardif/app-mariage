@@ -4,6 +4,16 @@ function pad(n) {
   return String(n).padStart(2, "0");
 }
 
+function getRemark(score, total) {
+  const ratio = total > 0 ? score / total : 0;
+
+  if (ratio >= 0.9) return "Tu connais les mariés parfaitement, c'est presque suspect 😄";
+  if (ratio >= 0.75) return "Très solide ! Tu fais clairement partie du premier cercle 🫶";
+  if (ratio >= 0.5) return "Pas mal du tout ! Mais il reste quelques anecdotes à réviser 😉";
+  if (ratio >= 0.25) return "Hmm... on sent un potentiel, mais il faut un petit rattrapage 😅";
+  return "Es-tu sûr de bien connaître les mariés ? On t'aime quand même ❤️";
+}
+
 export async function initQuiz({ loadScores, saveScores }) {
   const quiz = await fetchJSON("./data/quiz.json");
   const container = document.getElementById("quizContainer");
@@ -20,13 +30,27 @@ export async function initQuiz({ loadScores, saveScores }) {
 
   let currentQuestion = 0;
   const selectedAnswers = new Array(quiz.questions.length).fill(null);
+  let finalScore = 0;
+  let finalAnswered = 0;
 
   function renderQuestion() {
     if (currentQuestion >= quiz.questions.length) {
+      finalAnswered = selectedAnswers.filter((answer) => answer !== null).length;
+      finalScore = quiz.questions.reduce((acc, q, idx) => {
+        const chosen = selectedAnswers[idx];
+        if (chosen === null) return acc;
+        return Number(chosen) === Number(q.answer_index) ? acc + 1 : acc;
+      }, 0);
+
+      const total = quiz.questions.length;
+      const remark = getRemark(finalScore, total);
+
       container.innerHTML = `
         <div class="list-item">
           <p class="list-title">Quiz terminé 🎉</p>
-          <p class="small" style="margin:8px 0 0 0;">Entre ton prénom / pseudo ci-dessous, puis clique sur "Envoyer".</p>
+          <p class="card-subtitle" style="margin:8px 0 0 0;"><b>Ton score : ${finalScore}/${total}</b></p>
+          <p class="small" style="margin:8px 0 0 0;">${escapeHTML(remark)}</p>
+          <p class="small" style="margin:8px 0 0 0;">Si tu veux enregistrer ton résultat, indique ton prénom / pseudo ci-dessous.</p>
         </div>
       `;
       finalStep.style.display = "block";
@@ -82,16 +106,6 @@ export async function initQuiz({ loadScores, saveScores }) {
       return;
     }
 
-    let score = 0;
-    let answered = 0;
-
-    quiz.questions.forEach((q, idx) => {
-      const chosen = selectedAnswers[idx];
-      if (chosen === null) return;
-      answered += 1;
-      if (Number(chosen) === Number(q.answer_index)) score += 1;
-    });
-
     const total = quiz.questions.length;
     const now = new Date();
     const ts = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -99,9 +113,9 @@ export async function initQuiz({ loadScores, saveScores }) {
     const scores = loadScores();
     scores.push({
       player,
-      score,
+      score: finalScore,
       total,
-      answered,
+      answered: finalAnswered,
       time: ts,
       created_at: now.toISOString(),
     });
@@ -110,11 +124,8 @@ export async function initQuiz({ loadScores, saveScores }) {
     out.innerHTML = `
       <div class="card flash" style="box-shadow:none;">
         <div class="card-inner">
-          <h3 class="card-title">Score enregistré 🎉</h3>
-          <p class="card-subtitle"><b>${escapeHTML(player)}</b> : ${score}/${total} (répondu: ${answered}/${total})</p>
-          <div style="margin-top:10px;">
-            <a class="badge" href="#/leaderboard">Voir le leaderboard</a>
-          </div>
+          <h3 class="card-title">Résultat envoyé 🎉</h3>
+          <p class="card-subtitle"><b>${escapeHTML(player)}</b> : ${finalScore}/${total}</p>
         </div>
       </div>
     `;
