@@ -2,6 +2,9 @@ import { fetchJSON, normalizeName, escapeHTML, renderNotFound } from "./ui.js";
 
 const STORAGE_KEY = "mariage_quiz_scores_v1";
 
+// 🔧 Mets ton vrai lien WhatsApp ici
+const WHATSAPP_LINK = "https://wa.me/"; // ou lien d'invitation de groupe/canal
+
 function loadScores() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -52,7 +55,7 @@ async function initChambre() {
     }
 
     result.innerHTML = matches
-      .slice(0, 5)
+      .slice(0, 8)
       .map(
         (r) => `
         <div class="card" style="box-shadow:none;">
@@ -103,7 +106,7 @@ async function initPhotos() {
     }
 
     result.innerHTML = matches
-      .slice(0, 5)
+      .slice(0, 8)
       .map(
         (s) => `
         <div class="card" style="box-shadow:none;">
@@ -159,11 +162,11 @@ async function initQuiz() {
       const options = q.options
         .map(
           (opt, j) => `
-            <label class="list-item" style="display:flex; gap:10px; align-items:center; cursor:pointer;">
-              <input type="radio" name="q_${idx}" value="${escapeHTML(String(j))}" />
-              <div><p class="list-title" style="margin:0;">${escapeHTML(opt)}</p></div>
-            </label>
-          `
+          <label class="list-item" style="display:flex; gap:10px; align-items:center; cursor:pointer;">
+            <input type="radio" name="q_${idx}" value="${escapeHTML(String(j))}" />
+            <div><p class="list-title" style="margin:0;">${escapeHTML(opt)}</p></div>
+          </label>
+        `
         )
         .join("");
 
@@ -292,13 +295,10 @@ function initLeaderboard() {
 function initWhatsApp() {
   const btn = document.getElementById("waBtn");
   if (!btn) return;
-  // Mets ton vrai lien ici si tu veux le centraliser plutôt que dans la page
-  const WHATSAPP_LINK = "https://wa.me/";
   btn.href = WHATSAPP_LINK;
 }
 
 export async function initPage(routePath) {
-  // Important : on init uniquement les pages qui en ont besoin
   switch (routePath) {
     case "/plan":
       return initPlan();
