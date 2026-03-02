@@ -44,10 +44,34 @@ async function initPlan() {
 }
 
 async function initChambre() {
-  const rooms = await fetchJSON("./data/rooms.json");
+  const ROOMS_API =
+    "https://script.google.com/macros/s/TON_ID/exec?path=rooms";
+
   const input = document.getElementById("roomSearch");
   const result = document.getElementById("roomResult");
   if (!input || !result) return;
+
+  let rooms = [];
+  try {
+    const payload = await fetchJSONP(ROOMS_API);
+    rooms = Array.isArray(payload?.rooms) ? payload.rooms : [];
+  } catch (e) {
+    result.innerHTML = renderNotFound(`Impossible de charger les chambres. ${String(e?.message || e)}`);
+    return;
+  }
+
+  function isNonEmpty(v) {
+    return String(v || "").trim() !== "";
+  }
+
+  function line(label, value) {
+    return `
+      <div class="kv-row">
+        <div class="kv-key">${escapeHTML(label)}</div>
+        <div class="kv-val">${escapeHTML(value)}</div>
+      </div>
+    `;
+  }
 
   function render(matches) {
     if (!matches.length) {
@@ -57,27 +81,33 @@ async function initChambre() {
 
     result.innerHTML = matches
       .slice(0, 8)
-      .map(
-        (r) => `
-        <div class="card" style="box-shadow:none;">
-          <div class="card-inner">
-            <div class="badge">🛏 ${escapeHTML(r.building)}</div>
-            <h3 class="card-title" style="margin-top:10px;">${escapeHTML(r.full_name)}</h3>
+      .map((r) => {
+        const rows = [];
 
-            <div class="kv">
-              <div class="kv-row">
-                <div class="kv-key">Chambre</div>
-                <div class="kv-val">${escapeHTML(r.room_name)}</div>
-              </div>
-              <div class="kv-row">
-                <div class="kv-key">Infos</div>
-                <div class="kv-val">${escapeHTML(r.notes || "—")}</div>
+        // Toujours afficher ces champs (si présents)
+        if (isNonEmpty(r.building)) rows.push(line("Bâtiment", r.building));
+        if (isNonEmpty(r.room_name)) rows.push(line("Chambre", r.room_name));
+        if (isNonEmpty(r.notes)) rows.push(line("Infos", r.notes));
+
+        // Optionnels : afficher seulement si non vides
+        if (isNonEmpty(r.bed_type)) rows.push(line("Lit", r.bed_type));
+        if (isNonEmpty(r.capacity)) rows.push(line("Capacité", r.capacity));
+        if (isNonEmpty(r.bathroom)) rows.push(line("Salle de bain", r.bathroom));
+        if (isNonEmpty(r.extra)) rows.push(line("Extra", r.extra));
+
+        return `
+          <div class="card" style="box-shadow:none;">
+            <div class="card-inner">
+              <div class="badge">🛏 ${escapeHTML(r.building || "Chambre")}</div>
+              <h3 class="card-title" style="margin-top:10px;">${escapeHTML(r.display_name || r.person_id || "—")}</h3>
+
+              <div class="kv">
+                ${rows.join("") || `<div class="small">Aucune info disponible.</div>`}
               </div>
             </div>
           </div>
-        </div>
-      `
-      )
+        `;
+      })
       .join("");
   }
 
@@ -87,7 +117,13 @@ async function initChambre() {
       result.innerHTML = "";
       return;
     }
-    const matches = rooms.filter((r) => normalizeName(r.full_name).includes(q));
+
+    const matches = rooms.filter((r) => {
+      const name = normalizeName(r.display_name || "");
+      const pid = normalizeName(r.person_id || "");
+      return name.includes(q) || pid.includes(q);
+    });
+
     render(matches);
   }
 
