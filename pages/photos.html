@@ -1,18 +1,58 @@
 <div class="card">
   <div class="card-inner">
-    <h2 class="card-title">Trouver mon créneau photo</h2>
-    <p class="card-subtitle">Recherche par nom. Lieu : <b>Lac</b> 📍</p>
+    <h2 class="card-title">Photos de groupe</h2>
+    <p class="card-subtitle">Retrouve ton créneau (mise à jour en direct)</p>
 
     <div class="hr"></div>
 
-    <div class="search">
-      <input id="photoSearch" type="text" placeholder="Rechercher…" autocomplete="off" />
+    <label class="small" for="search"><b>Je suis…</b></label>
+
+    <div class="search" style="margin-top:8px;">
+      <input id="search" type="text" placeholder="Prénom ou nom (ex: Camille, Durand…)" autocomplete="off" />
     </div>
 
-    <div style="margin-top: 12px;" id="photoResult"></div>
+    <div id="results" class="list" style="margin-top:10px; display:none;" aria-live="polite"></div>
 
-    <p class="small" style="margin-top: 12px;">
-      Si tu es en retard, viens quand même 🙂
-    </p>
+    <div class="grid two" style="margin-top:12px;">
+      <button id="clearBtn" class="btn" type="button">
+        <div class="icon gray">🧹</div>
+        <div class="btn-text">
+          <div class="btn-title">Effacer</div>
+          <div class="btn-desc">Réinitialiser la sélection</div>
+        </div>
+      </button>
+
+      <button id="refreshBtn" class="btn" type="button">
+        <div class="icon sage">🔄</div>
+        <div class="btn-text">
+          <div class="btn-title">Rafraîchir</div>
+          <div class="btn-desc">Recharger les créneaux</div>
+        </div>
+      </button>
+    </div>
+
+    <div style="margin-top:12px;">
+      <div id="statusLine" class="small">Chargement…</div>
+      <div class="small" style="margin-top:6px; opacity:0.85;">
+        Astuce : si tu ne te trouves pas, vérifie l’orthographe ou demande à l’orga.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="profile" class="card" style="display:none;">
+  <div class="card-inner">
+    <div style="display:flex; justify-content:space-between; gap:10px; align-items:baseline;">
+      <h3 class="card-title" id="profileName" style="margin:0;"></h3>
+      <div class="small" id="updatedAt"></div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div id="slotsList" class="list"></div>
+
+    <div class="small" style="margin-top:12px;">
+      Données utilisées uniquement pour l’organisation du mariage.
+    </div>
   </div>
 </div>
