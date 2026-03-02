@@ -1,7 +1,7 @@
 <div class="card">
   <div class="card-inner">
     <h2 class="card-title">Trouver ma chambre</h2>
-    <p class="card-subtitle">Tape ton prénom + nom (ex: “Alice Ballot-Léna”).</p>
+    <p class="card-subtitle">Tape ton prénom + nom.</p>
 
     <div class="hr"></div>
 
@@ -16,57 +16,3 @@
     </p>
   </div>
 </div>
-
-<script type="module">
-  import { fetchJSON, normalizeName, escapeHTML, renderNotFound } from "./assets/ui.js";
-
-  window.__initPage = async () => {
-    const rooms = await fetchJSON("./data/rooms.json");
-    const input = document.getElementById("roomSearch");
-    const result = document.getElementById("roomResult");
-
-    function render(matches) {
-      if (!matches.length) {
-        result.innerHTML = renderNotFound("Aucun résultat pour le moment.");
-        return;
-      }
-
-      result.innerHTML = matches
-        .slice(0, 5)
-        .map((r) => {
-          return `
-            <div class="card" style="box-shadow:none;">
-              <div class="card-inner">
-                <div class="badge">🛏 ${escapeHTML(r.building)}</div>
-                <h3 class="card-title" style="margin-top:10px;">${escapeHTML(r.full_name)}</h3>
-
-                <div class="kv">
-                  <div class="kv-row">
-                    <div class="kv-key">Chambre</div>
-                    <div class="kv-val">${escapeHTML(r.room_name)}</div>
-                  </div>
-                  <div class="kv-row">
-                    <div class="kv-key">Infos</div>
-                    <div class="kv-val">${escapeHTML(r.notes || "—")}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          `;
-        })
-        .join("");
-    }
-
-    function search() {
-      const q = normalizeName(input.value);
-      if (!q) {
-        result.innerHTML = "";
-        return;
-      }
-      const matches = rooms.filter((r) => normalizeName(r.full_name).includes(q));
-      render(matches);
-    }
-
-    input.addEventListener("input", search);
-  };
-</script>
