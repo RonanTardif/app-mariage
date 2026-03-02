@@ -1,0 +1,24 @@
+{
+  "questions": [
+    {
+      "question": "Où se déroulent les photos de groupe ?",
+      "options": ["Dans l’orangerie", "Au lac", "Dans la chapelle", "Au saloon"],
+      "answer_index": 1
+    },
+    {
+      "question": "À quelle heure commence le vin d’honneur ?",
+      "options": ["16h", "17h", "18h", "19h"],
+      "answer_index": 1
+    },
+    {
+      "question": "Le brunch du dimanche est servi où ?",
+      "options": ["Le château", "Les gîtes", "Le saloon", "Le jardin français"],
+      "answer_index": 2
+    },
+    {
+      "question": "La piscine ouvre quand ?",
+      "options": ["Samedi matin", "Samedi soir", "Dimanche 10h", "Dimanche 18h"],
+      "answer_index": 2
+    }
+  ]
+}
