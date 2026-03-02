@@ -316,3 +316,7 @@ button, input { font-family: inherit; }
   font-size: 12px;
   color: rgba(28,28,28,0.6);
 }
+
+.badge.ok { background: rgba(155, 170, 154, 0.25); }
+.badge.warn { background: rgba(232, 191, 199, 0.28); }
+.badge.danger { background: rgba(111, 115, 119, 0.22); }
