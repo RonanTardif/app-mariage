@@ -1,6 +1,7 @@
 import { routes, getRouteFromHash } from "./router.js";
 import { setActiveNav, setClock } from "./ui.js";
 import { initPage } from "./inits.js";
+import { warmupAppCaches } from "./data-cache.js";
 
 async function loadPage(routePath) {
   const view = document.getElementById("view");
@@ -46,3 +47,4 @@ window.addEventListener("hashchange", onRouteChange);
 
 tickClock();
 onRouteChange();
+warmupAppCaches();

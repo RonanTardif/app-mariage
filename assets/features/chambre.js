@@ -1,6 +1,5 @@
 import { normalizeName, escapeHTML, renderNotFound } from "../ui.js";
-import { fetchJSONP } from "../jsonp.js";
-import { ROOMS_API } from "../config.js";
+import { fetchRoomsData, getCachedRoomsData } from "../data-cache.js";
 
 function isNonEmpty(v) {
   return String(v || "").trim() !== "";
@@ -46,18 +45,32 @@ function renderResultCards(matches) {
     .join("");
 }
 
+function prepareRoomIndex(rooms) {
+  return rooms.map((room) => ({
+    room,
+    searchName: normalizeName(room.display_name || ""),
+    searchPersonId: normalizeName(room.person_id || ""),
+  }));
+}
+
 export async function initChambre() {
   const input = document.getElementById("roomSearch");
   const result = document.getElementById("roomResult");
   if (!input || !result) return;
 
-  let rooms = [];
+  const cachedPayload = getCachedRoomsData();
+  let rooms = Array.isArray(cachedPayload?.rooms) ? cachedPayload.rooms : [];
+  let roomIndex = prepareRoomIndex(rooms);
+
   try {
-    const payload = await fetchJSONP(ROOMS_API);
+    const payload = await fetchRoomsData();
     rooms = Array.isArray(payload?.rooms) ? payload.rooms : [];
+    roomIndex = prepareRoomIndex(rooms);
   } catch (e) {
-    result.innerHTML = renderNotFound(`Impossible de charger les chambres. ${String(e?.message || e)}`);
-    return;
+    if (!rooms.length) {
+      result.innerHTML = renderNotFound(`Impossible de charger les chambres. ${String(e?.message || e)}`);
+      return;
+    }
   }
 
   function render(matches) {
@@ -76,11 +89,9 @@ export async function initChambre() {
       return;
     }
 
-    const matches = rooms.filter((r) => {
-      const name = normalizeName(r.display_name || "");
-      const pid = normalizeName(r.person_id || "");
-      return name.includes(q) || pid.includes(q);
-    });
+    const matches = roomIndex
+      .filter((item) => item.searchName.includes(q) || item.searchPersonId.includes(q))
+      .map((item) => item.room);
 
     render(matches);
   }
