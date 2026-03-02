@@ -17,11 +17,8 @@ function getRemark(score, total) {
 export async function initQuiz({ loadScores, saveScores }) {
   const quiz = await fetchJSON("./data/quiz.json");
   const container = document.getElementById("quizContainer");
-  const finalStep = document.getElementById("finalStep");
-  const nameInput = document.getElementById("playerName");
-  const submit = document.getElementById("submitQuiz");
   const out = document.getElementById("quizResult");
-  if (!container || !finalStep || !nameInput || !submit || !out) return;
+  if (!container || !out) return;
 
   if (!quiz?.questions?.length) {
     container.innerHTML = renderNotFound("Quiz non configuré.");
@@ -30,31 +27,97 @@ export async function initQuiz({ loadScores, saveScores }) {
 
   let currentQuestion = 0;
   const selectedAnswers = new Array(quiz.questions.length).fill(null);
-  let finalScore = 0;
-  let finalAnswered = 0;
+
+  function renderFinalStep() {
+    const finalAnswered = selectedAnswers.filter((answer) => answer !== null).length;
+    const finalScore = quiz.questions.reduce((acc, q, idx) => {
+      const chosen = selectedAnswers[idx];
+      if (chosen === null) return acc;
+      return Number(chosen) === Number(q.answer_index) ? acc + 1 : acc;
+    }, 0);
+
+    const total = quiz.questions.length;
+    const remark = getRemark(finalScore, total);
+
+    container.innerHTML = `
+      <div class="list-item">
+        <p class="list-title">Quiz terminé 🎉</p>
+        <p class="card-subtitle" style="margin:8px 0 0 0;"><b>Ton score : ${finalScore}/${total}</b></p>
+        <p class="small" style="margin:8px 0 0 0;">${escapeHTML(remark)}</p>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="search" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+        <label for="playerName" class="small" style="font-weight:700;">Entre ton prénom / pseudo pour envoyer ton résultat</label>
+        <input id="playerName" type="text" placeholder="Ton prénom / pseudo" autocomplete="off" />
+      </div>
+
+      <div class="hr"></div>
+
+      <button id="submitQuiz" class="btn" type="button" style="justify-content:space-between;">
+        <div style="display:flex; gap:12px; align-items:center;">
+          <div class="icon rose">✅</div>
+          <div class="btn-text">
+            <div class="btn-title">Envoyer</div>
+            <div class="btn-desc">Confirmer mon résultat</div>
+          </div>
+        </div>
+        <div class="badge">→</div>
+      </button>
+    `;
+
+    const nameInput = document.getElementById("playerName");
+    const submit = document.getElementById("submitQuiz");
+    if (!nameInput || !submit) return;
+
+    nameInput.focus();
+
+    submit.addEventListener("click", () => {
+      const player = (nameInput.value || "").trim();
+      if (!player) {
+        out.innerHTML = `
+          <div class="card" style="box-shadow:none;">
+            <div class="card-inner">
+              <h3 class="card-title">Pseudo manquant</h3>
+              <p class="card-subtitle">Entre ton prénom ou pseudo avant d'envoyer.</p>
+            </div>
+          </div>
+        `;
+        nameInput.focus();
+        return;
+      }
+
+      const now = new Date();
+      const ts = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+      const scores = loadScores();
+      scores.push({
+        player,
+        score: finalScore,
+        total,
+        answered: finalAnswered,
+        time: ts,
+        created_at: now.toISOString(),
+      });
+      saveScores(scores);
+
+      out.innerHTML = `
+        <div class="card flash" style="box-shadow:none;">
+          <div class="card-inner">
+            <h3 class="card-title">Résultat envoyé 🎉</h3>
+            <p class="card-subtitle"><b>${escapeHTML(player)}</b> : ${finalScore}/${total}</p>
+          </div>
+        </div>
+      `;
+
+      submit.disabled = true;
+    });
+  }
 
   function renderQuestion() {
     if (currentQuestion >= quiz.questions.length) {
-      finalAnswered = selectedAnswers.filter((answer) => answer !== null).length;
-      finalScore = quiz.questions.reduce((acc, q, idx) => {
-        const chosen = selectedAnswers[idx];
-        if (chosen === null) return acc;
-        return Number(chosen) === Number(q.answer_index) ? acc + 1 : acc;
-      }, 0);
-
-      const total = quiz.questions.length;
-      const remark = getRemark(finalScore, total);
-
-      container.innerHTML = `
-        <div class="list-item">
-          <p class="list-title">Quiz terminé 🎉</p>
-          <p class="card-subtitle" style="margin:8px 0 0 0;"><b>Ton score : ${finalScore}/${total}</b></p>
-          <p class="small" style="margin:8px 0 0 0;">${escapeHTML(remark)}</p>
-          <p class="small" style="margin:8px 0 0 0;">Si tu veux enregistrer ton résultat, indique ton prénom / pseudo ci-dessous.</p>
-        </div>
-      `;
-      finalStep.style.display = "block";
-      nameInput.focus();
+      renderFinalStep();
       return;
     }
 
@@ -90,46 +153,4 @@ export async function initQuiz({ loadScores, saveScores }) {
   }
 
   renderQuestion();
-
-  submit.addEventListener("click", () => {
-    const player = (nameInput.value || "").trim();
-    if (!player) {
-      out.innerHTML = `
-        <div class="card" style="box-shadow:none;">
-          <div class="card-inner">
-            <h3 class="card-title">Pseudo manquant</h3>
-            <p class="card-subtitle">Entre ton prénom ou pseudo avant d'envoyer.</p>
-          </div>
-        </div>
-      `;
-      nameInput.focus();
-      return;
-    }
-
-    const total = quiz.questions.length;
-    const now = new Date();
-    const ts = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-
-    const scores = loadScores();
-    scores.push({
-      player,
-      score: finalScore,
-      total,
-      answered: finalAnswered,
-      time: ts,
-      created_at: now.toISOString(),
-    });
-    saveScores(scores);
-
-    out.innerHTML = `
-      <div class="card flash" style="box-shadow:none;">
-        <div class="card-inner">
-          <h3 class="card-title">Résultat envoyé 🎉</h3>
-          <p class="card-subtitle"><b>${escapeHTML(player)}</b> : ${finalScore}/${total}</p>
-        </div>
-      </div>
-    `;
-
-    submit.disabled = true;
-  });
 }
