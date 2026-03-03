@@ -1,8 +1,11 @@
+import { ADMIN_API } from "../config.js";
+import { fetchJSONP } from "../jsonp.js";
 import { loadJSONFromStorage, saveJSONToStorage } from "../storage.js";
 import { escapeHTML } from "../ui.js";
 
 const ADMIN_STATE_KEY = "mariage_admin_state_v7";
 const LONG_PRESS_MS = 220;
+const SYNC_DEBOUNCE_MS = 500;
 
 const DEFAULT_STATE = {
   delayMinutes: 8,
@@ -199,7 +202,6 @@ function wireTouchLongPressReorder(state, onChange) {
   let pressTimer = null;
   let startY = 0;
   let lastY = 0;
-  let rowHeight = 0;
   let isDragging = false;
 
   const rows = () => Array.from(board.querySelectorAll(".admin-schedule-row"));
@@ -270,7 +272,6 @@ function wireTouchLongPressReorder(state, onChange) {
       draggedIndex = Number(activeRow.dataset.rowIndex);
       if (!Number.isInteger(draggedIndex)) return;
 
-      rowHeight = activeRow.getBoundingClientRect().height;
       isDragging = true;
       board.classList.add("is-touch-dragging");
       activeRow.classList.add("touch-dragging");
@@ -325,17 +326,29 @@ function setStatus(message, tone = "") {
   if (tone === "ok") status.classList.add("ok");
 }
 
-function simulateSheetSync(state) {
-  setStatus("Synchronisation Google Sheet simulée en cours…");
-  window.setTimeout(() => {
-    setStatus(
-      `Google Sheet simulé mis à jour · début ${state.photoStart} · intervalle ${state.groupIntervalMinutes} min · retard ${state.delayMinutes} min`,
-      "ok",
-    );
-  }, 500);
+function parseRemoteState(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  if (payload.state && typeof payload.state === "object") return payload.state;
+  if (payload.data && typeof payload.data === "object") return payload.data;
+  return payload;
 }
 
-export function initAdmin() {
+async function fetchAdminStateRemote() {
+  const response = await fetchJSONP(`${ADMIN_API}&action=get`);
+  return normalizeState(parseRemoteState(response));
+}
+
+function createSyncUrl(state) {
+  const encoded = encodeURIComponent(JSON.stringify(state));
+  return `${ADMIN_API}&action=upsert&state=${encoded}`;
+}
+
+async function syncStateToRemote(state) {
+  const response = await fetchJSONP(createSyncUrl(state), { timeoutMs: 10000 });
+  return response;
+}
+
+export async function initAdmin() {
   const state = getState();
 
   const delayInput = document.getElementById("delayInput");
@@ -346,27 +359,81 @@ export function initAdmin() {
 
   if (!delayInput || !photoStartInput || !groupIntervalInput || !saveBtn || !resetBtn) return;
 
-  delayInput.value = String(state.delayMinutes);
-  photoStartInput.value = state.photoStart;
-  groupIntervalInput.value = String(state.groupIntervalMinutes);
+  let syncTimer = null;
+  let syncRequestInFlight = null;
 
   const refreshBoard = () => {
     renderSchedule(state);
     setState(state);
-    wireDoneButtons(state, refreshBoard);
-    wireDesktopDragAndDrop(state, refreshBoard);
-    wireTouchLongPressReorder(state, refreshBoard);
+    wireDoneButtons(state, () => {
+      refreshBoard();
+      queueSync("Modification enregistrée localement…");
+    });
+    wireDesktopDragAndDrop(state, () => {
+      refreshBoard();
+      queueSync("Réorganisation enregistrée localement…");
+    });
+    wireTouchLongPressReorder(state, () => {
+      refreshBoard();
+      queueSync("Réorganisation mobile enregistrée localement…");
+    });
+  };
+
+  const renderInputs = () => {
+    delayInput.value = String(state.delayMinutes);
+    photoStartInput.value = state.photoStart;
+    groupIntervalInput.value = String(state.groupIntervalMinutes);
+  };
+
+  const flushSync = async () => {
+    if (syncRequestInFlight) return syncRequestInFlight;
+
+    setStatus("Synchronisation Google Sheet en cours…");
+    syncRequestInFlight = syncStateToRemote(state)
+      .then(() => {
+        setStatus("Google Sheet synchronisé en temps réel.", "ok");
+      })
+      .catch(() => {
+        setStatus("Échec de sync Google Sheet (données conservées localement).", "");
+      })
+      .finally(() => {
+        syncRequestInFlight = null;
+      });
+
+    return syncRequestInFlight;
+  };
+
+  const queueSync = (pendingMessage = "Changements détectés. Synchronisation…") => {
+    setStatus(pendingMessage);
+    window.clearTimeout(syncTimer);
+    syncTimer = window.setTimeout(() => {
+      flushSync();
+    }, SYNC_DEBOUNCE_MS);
   };
 
   refreshBoard();
+  renderInputs();
+
+  setStatus("Chargement depuis Google Sheet…");
+  try {
+    const remoteState = await fetchAdminStateRemote();
+    state.delayMinutes = remoteState.delayMinutes;
+    state.photoStart = remoteState.photoStart;
+    state.groupIntervalMinutes = remoteState.groupIntervalMinutes;
+    state.groups = remoteState.groups;
+    renderInputs();
+    refreshBoard();
+    setStatus("Configuration chargée depuis Google Sheet.", "ok");
+  } catch {
+    setStatus("Google Sheet indisponible, mode local actif.");
+  }
 
   saveBtn.addEventListener("click", () => {
     state.photoStart = photoStartInput.value || DEFAULT_STATE.photoStart;
     state.groupIntervalMinutes = Math.max(1, Number(groupIntervalInput.value) || 1);
     state.delayMinutes = Math.max(0, Number(delayInput.value) || 0);
-    setState(state);
     refreshBoard();
-    simulateSheetSync(state);
+    queueSync("Modifications appliquées. Synchronisation Google Sheet…");
   });
 
   resetBtn.addEventListener("click", () => {
@@ -375,10 +442,8 @@ export function initAdmin() {
     state.photoStart = reset.photoStart;
     state.groupIntervalMinutes = reset.groupIntervalMinutes;
     state.groups = reset.groups;
-    delayInput.value = String(state.delayMinutes);
-    photoStartInput.value = state.photoStart;
-    groupIntervalInput.value = String(state.groupIntervalMinutes);
+    renderInputs();
     refreshBoard();
-    setStatus("Données synthétiques restaurées.", "ok");
+    queueSync("Données réinitialisées. Synchronisation Google Sheet…");
   });
 }
