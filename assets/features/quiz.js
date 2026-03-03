@@ -4,90 +4,153 @@ function pad(n) {
   return String(n).padStart(2, "0");
 }
 
+function getRemark(score, total) {
+  const ratio = total > 0 ? score / total : 0;
+
+  if (ratio >= 0.9) return "Tu connais les mariés parfaitement, c'est presque suspect 😄";
+  if (ratio >= 0.75) return "Très solide ! Tu fais clairement partie du premier cercle 🫶";
+  if (ratio >= 0.5) return "Pas mal du tout ! Mais il reste quelques anecdotes à réviser 😉";
+  if (ratio >= 0.25) return "Hmm... on sent un potentiel, mais il faut un petit rattrapage 😅";
+  return "Es-tu sûr de bien connaître les mariés ? On t'aime quand même ❤️";
+}
+
 export async function initQuiz({ loadScores, saveScores }) {
   const quiz = await fetchJSON("./data/quiz.json");
   const container = document.getElementById("quizContainer");
-  const nameInput = document.getElementById("playerName");
-  const submit = document.getElementById("submitQuiz");
   const out = document.getElementById("quizResult");
-  if (!container || !nameInput || !submit || !out) return;
+  if (!container || !out) return;
 
   if (!quiz?.questions?.length) {
     container.innerHTML = renderNotFound("Quiz non configuré.");
     return;
   }
 
-  container.innerHTML = quiz.questions
-    .map((q, idx) => {
-      const options = q.options
-        .map(
-          (opt, j) => `
-          <label class="list-item" style="display:flex; gap:10px; align-items:center; cursor:pointer;">
-            <input type="radio" name="q_${idx}" value="${escapeHTML(String(j))}" />
-            <div><p class="list-title" style="margin:0;">${escapeHTML(opt)}</p></div>
-          </label>
-        `
-        )
-        .join("");
+  let currentQuestion = 0;
+  const selectedAnswers = new Array(quiz.questions.length).fill(null);
 
-      return `
-        <div class="list-item">
-          <p class="list-title">${idx + 1}. ${escapeHTML(q.question)}</p>
-          <div class="list" style="margin-top:10px;">${options}</div>
+  function renderFinalStep() {
+    const finalAnswered = selectedAnswers.filter((answer) => answer !== null).length;
+    const finalScore = quiz.questions.reduce((acc, q, idx) => {
+      const chosen = selectedAnswers[idx];
+      if (chosen === null) return acc;
+      return Number(chosen) === Number(q.answer_index) ? acc + 1 : acc;
+    }, 0);
+
+    const total = quiz.questions.length;
+    const remark = getRemark(finalScore, total);
+
+    container.innerHTML = `
+      <div class="list-item">
+        <p class="list-title">Quiz terminé 🎉</p>
+        <p class="card-subtitle" style="margin:8px 0 0 0;"><b>Ton score : ${finalScore}/${total}</b></p>
+        <p class="small" style="margin:8px 0 0 0;">${escapeHTML(remark)}</p>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="search" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+        <label for="playerName" class="small" style="font-weight:700;">Entre ton prénom / pseudo pour envoyer ton résultat</label>
+        <input id="playerName" type="text" placeholder="Ton prénom / pseudo" autocomplete="off" />
+      </div>
+
+      <div class="hr"></div>
+
+      <button id="submitQuiz" class="btn" type="button" style="justify-content:space-between;">
+        <div style="display:flex; gap:12px; align-items:center;">
+          <div class="icon rose">✅</div>
+          <div class="btn-text">
+            <div class="btn-title">Envoyer</div>
+            <div class="btn-desc">Confirmer mon résultat</div>
+          </div>
         </div>
-      `;
-    })
-    .join("");
+        <div class="badge">→</div>
+      </button>
+    `;
 
-  submit.addEventListener("click", () => {
-    const player = (nameInput.value || "").trim();
-    if (!player) {
+    const nameInput = document.getElementById("playerName");
+    const submit = document.getElementById("submitQuiz");
+    if (!nameInput || !submit) return;
+
+    nameInput.focus();
+
+    submit.addEventListener("click", () => {
+      const player = (nameInput.value || "").trim();
+      if (!player) {
+        out.innerHTML = `
+          <div class="card" style="box-shadow:none;">
+            <div class="card-inner">
+              <h3 class="card-title">Pseudo manquant</h3>
+              <p class="card-subtitle">Entre ton prénom ou pseudo avant d'envoyer.</p>
+            </div>
+          </div>
+        `;
+        nameInput.focus();
+        return;
+      }
+
+      const now = new Date();
+      const ts = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+      const scores = loadScores();
+      scores.push({
+        player,
+        score: finalScore,
+        total,
+        answered: finalAnswered,
+        time: ts,
+        created_at: now.toISOString(),
+      });
+      saveScores(scores);
+
       out.innerHTML = `
-        <div class="card" style="box-shadow:none;">
+        <div class="card flash" style="box-shadow:none;">
           <div class="card-inner">
-            <h3 class="card-title">Pseudo manquant</h3>
-            <p class="card-subtitle">Renseigne ton prénom/pseudo avant de valider.</p>
+            <h3 class="card-title">Résultat envoyé 🎉</h3>
+            <p class="card-subtitle"><b>${escapeHTML(player)}</b> : ${finalScore}/${total}</p>
           </div>
         </div>
       `;
+
+      submit.disabled = true;
+    });
+  }
+
+  function renderQuestion() {
+    if (currentQuestion >= quiz.questions.length) {
+      renderFinalStep();
       return;
     }
 
-    let score = 0;
-    let answered = 0;
+    const q = quiz.questions[currentQuestion];
+    const options = q.options
+      .map(
+        (opt, j) => `
+          <label class="list-item" style="display:flex; gap:10px; align-items:center; cursor:pointer;">
+            <input type="radio" name="current_question" value="${escapeHTML(String(j))}" />
+            <div><p class="list-title" style="margin:0;">${escapeHTML(opt)}</p></div>
+          </label>
+        `
+      )
+      .join("");
 
-    quiz.questions.forEach((q, idx) => {
-      const chosen = document.querySelector(`input[name="q_${idx}"]:checked`);
-      if (!chosen) return;
-      answered += 1;
-      if (Number(chosen.value) === Number(q.answer_index)) score += 1;
-    });
-
-    const total = quiz.questions.length;
-    const now = new Date();
-    const ts = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-
-    const scores = loadScores();
-    scores.push({
-      player,
-      score,
-      total,
-      answered,
-      time: ts,
-      created_at: now.toISOString(),
-    });
-    saveScores(scores);
-
-    out.innerHTML = `
-      <div class="card flash" style="box-shadow:none;">
-        <div class="card-inner">
-          <h3 class="card-title">Score enregistré 🎉</h3>
-          <p class="card-subtitle"><b>${escapeHTML(player)}</b> : ${score}/${total} (répondu: ${answered}/${total})</p>
-          <div style="margin-top:10px;">
-            <a class="badge" href="#/leaderboard">Voir le leaderboard</a>
-          </div>
-        </div>
+    container.innerHTML = `
+      <div class="list-item">
+        <p class="small" style="margin:0 0 8px 0;">Question ${currentQuestion + 1} / ${quiz.questions.length}</p>
+        <p class="list-title">${escapeHTML(q.question)}</p>
+        <div class="list" style="margin-top:10px;">${options}</div>
+        <p class="small" style="margin-top:10px;">Le quiz passera automatiquement à la question suivante.</p>
       </div>
     `;
-  });
+
+    const radios = container.querySelectorAll('input[name="current_question"]');
+    radios.forEach((radio) => {
+      radio.addEventListener("change", (e) => {
+        selectedAnswers[currentQuestion] = Number(e.target.value);
+        currentQuestion += 1;
+        renderQuestion();
+      });
+    });
+  }
+
+  renderQuestion();
 }
