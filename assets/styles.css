@@ -551,43 +551,41 @@ button, input { font-family: inherit; }
 
 .admin-slots-board {
   display: grid;
-  gap: 10px;
-}
-
-.admin-slot {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.88);
-  padding: 10px;
-}
-
-.admin-slot-title {
-  font-weight: 900;
-  margin-bottom: 8px;
-}
-
-.admin-groups {
-  min-height: 44px;
-  display: grid;
   gap: 8px;
 }
 
-.admin-group-item {
-  text-align: left;
+.admin-schedule-row {
+  width: 100%;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: rgba(232, 191, 199, 0.22);
-  padding: 9px 10px;
-  font-weight: 700;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  align-items: center;
+  gap: 10px;
   cursor: grab;
+  text-align: left;
 }
 
-.admin-group-item.dragging {
+.admin-schedule-time {
+  font-weight: 900;
+}
+
+.admin-schedule-group {
+  font-weight: 700;
+}
+
+.admin-schedule-drag {
+  color: rgba(28, 28, 28, 0.55);
+  font-size: 18px;
+}
+
+.admin-schedule-row.dragging {
   opacity: 0.45;
 }
 
-.admin-groups.is-drop-target {
+.admin-schedule-row.is-drop-target {
   outline: 2px dashed rgba(155, 170, 154, 0.8);
-  outline-offset: 4px;
-  border-radius: 10px;
+  outline-offset: 2px;
 }

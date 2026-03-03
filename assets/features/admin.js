@@ -1,16 +1,21 @@
 import { loadJSONFromStorage, saveJSONToStorage } from "../storage.js";
 import { escapeHTML } from "../ui.js";
 
-const ADMIN_STATE_KEY = "mariage_admin_state_v1";
+const ADMIN_STATE_KEY = "mariage_admin_state_v2";
 
 const DEFAULT_STATE = {
   delayMinutes: 8,
   photoStart: "2026-06-20T16:00",
-  slots: [
-    { id: "s1", time: "16:00", groups: ["Famille mariée", "Témoins"] },
-    { id: "s2", time: "16:20", groups: ["Famille mariée + marié", "Fratrie"] },
-    { id: "s3", time: "16:40", groups: ["Famille mariée + mariée", "Amis proches"] },
-    { id: "s4", time: "17:00", groups: ["Cousins", "Collègues"] },
+  groupIntervalMinutes: 12,
+  groups: [
+    "Famille mariée",
+    "Témoins",
+    "Famille mariée + marié",
+    "Fratrie",
+    "Famille mariée + mariée",
+    "Amis proches",
+    "Cousins",
+    "Collègues",
   ],
 };
 
@@ -26,85 +31,85 @@ function setState(next) {
   saveJSONToStorage(ADMIN_STATE_KEY, next);
 }
 
-function renderSlots(state) {
+function toDate(value) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? new Date(DEFAULT_STATE.photoStart) : parsed;
+}
+
+function formatHour(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function getPassageTime(state, index) {
+  const base = toDate(state.photoStart);
+  const offsetMinutes = state.delayMinutes + (index * state.groupIntervalMinutes);
+  const time = new Date(base.getTime() + offsetMinutes * 60000);
+  return formatHour(time);
+}
+
+function renderSchedule(state) {
   const board = document.getElementById("slotsBoard");
   if (!board) return;
 
-  board.innerHTML = state.slots
-    .map((slot) => `
-      <section class="admin-slot" data-slot-id="${escapeHTML(slot.id)}">
-        <div class="admin-slot-title">${escapeHTML(slot.time)}</div>
-        <div class="admin-groups" data-drop-slot="${escapeHTML(slot.id)}">
-          ${slot.groups
-            .map(
-              (group, index) => `
-              <button
-                type="button"
-                class="admin-group-item"
-                draggable="true"
-                data-group-index="${index}"
-                data-slot-id="${escapeHTML(slot.id)}"
-              >
-                ☰ ${escapeHTML(group)}
-              </button>
-            `,
-            )
-            .join("")}
-        </div>
-      </section>
-    `)
+  board.innerHTML = state.groups
+    .map(
+      (group, index) => `
+        <button
+          type="button"
+          class="admin-schedule-row"
+          draggable="true"
+          data-row-index="${index}"
+        >
+          <span class="admin-schedule-time">${escapeHTML(getPassageTime(state, index))}</span>
+          <span class="admin-schedule-group">${escapeHTML(group)}</span>
+          <span class="admin-schedule-drag">☰</span>
+        </button>
+      `,
+    )
     .join("");
 }
 
-function moveGroup(state, fromSlotId, groupIndex, toSlotId) {
-  if (fromSlotId === toSlotId) return state;
+function moveRow(state, fromIndex, toIndex) {
+  const start = Number(fromIndex);
+  const end = Number(toIndex);
+  if (!Number.isInteger(start) || !Number.isInteger(end)) return;
+  if (start === end || start < 0 || end < 0) return;
+  if (start >= state.groups.length || end >= state.groups.length) return;
 
-  const fromSlot = state.slots.find((slot) => slot.id === fromSlotId);
-  const toSlot = state.slots.find((slot) => slot.id === toSlotId);
-  if (!fromSlot || !toSlot) return state;
-
-  const idx = Number(groupIndex);
-  if (!Number.isInteger(idx) || idx < 0 || idx >= fromSlot.groups.length) return state;
-
-  const [moved] = fromSlot.groups.splice(idx, 1);
-  if (moved) toSlot.groups.push(moved);
-  return state;
+  const [moved] = state.groups.splice(start, 1);
+  state.groups.splice(end, 0, moved);
 }
 
 function wireDragAndDrop(state, onChange) {
-  let payload = null;
+  let draggedIndex = null;
 
-  document.querySelectorAll(".admin-group-item").forEach((node) => {
+  document.querySelectorAll(".admin-schedule-row").forEach((node) => {
     node.addEventListener("dragstart", (event) => {
-      payload = {
-        fromSlotId: node.dataset.slotId,
-        groupIndex: node.dataset.groupIndex,
-      };
+      draggedIndex = node.dataset.rowIndex;
       event.dataTransfer?.setData("text/plain", "dragging");
       node.classList.add("dragging");
     });
 
     node.addEventListener("dragend", () => {
-      payload = null;
+      draggedIndex = null;
       node.classList.remove("dragging");
     });
-  });
 
-  document.querySelectorAll("[data-drop-slot]").forEach((zone) => {
-    zone.addEventListener("dragover", (event) => {
+    node.addEventListener("dragover", (event) => {
       event.preventDefault();
-      zone.classList.add("is-drop-target");
+      node.classList.add("is-drop-target");
     });
 
-    zone.addEventListener("dragleave", () => {
-      zone.classList.remove("is-drop-target");
+    node.addEventListener("dragleave", () => {
+      node.classList.remove("is-drop-target");
     });
 
-    zone.addEventListener("drop", (event) => {
+    node.addEventListener("drop", (event) => {
       event.preventDefault();
-      zone.classList.remove("is-drop-target");
-      if (!payload) return;
-      moveGroup(state, payload.fromSlotId, payload.groupIndex, zone.dataset.dropSlot);
+      node.classList.remove("is-drop-target");
+      if (draggedIndex == null) return;
+      moveRow(state, draggedIndex, node.dataset.rowIndex);
       onChange();
     });
   });
@@ -122,7 +127,7 @@ function simulateSheetSync(state) {
   setStatus("Synchronisation Google Sheet simulée en cours…");
   window.setTimeout(() => {
     setStatus(
-      `Google Sheet simulé mis à jour · retard ${state.delayMinutes} min · début photos ${state.photoStart}`,
+      `Google Sheet simulé mis à jour · retard ${state.delayMinutes} min · intervalle ${state.groupIntervalMinutes} min · début photos ${state.photoStart}`,
       "ok",
     );
   }, 500);
@@ -133,16 +138,18 @@ export function initAdmin() {
 
   const delayInput = document.getElementById("delayInput");
   const photoStartInput = document.getElementById("photoStartInput");
+  const groupIntervalInput = document.getElementById("groupIntervalInput");
   const saveBtn = document.getElementById("saveSettingsBtn");
   const resetBtn = document.getElementById("resetSettingsBtn");
 
-  if (!delayInput || !photoStartInput || !saveBtn || !resetBtn) return;
+  if (!delayInput || !photoStartInput || !groupIntervalInput || !saveBtn || !resetBtn) return;
 
   delayInput.value = String(state.delayMinutes);
   photoStartInput.value = state.photoStart;
+  groupIntervalInput.value = String(state.groupIntervalMinutes);
 
   const refreshBoard = () => {
-    renderSlots(state);
+    renderSchedule(state);
     setState(state);
     wireDragAndDrop(state, refreshBoard);
   };
@@ -152,7 +159,9 @@ export function initAdmin() {
   saveBtn.addEventListener("click", () => {
     state.delayMinutes = Math.max(0, Number(delayInput.value) || 0);
     state.photoStart = photoStartInput.value || DEFAULT_STATE.photoStart;
+    state.groupIntervalMinutes = Math.max(1, Number(groupIntervalInput.value) || 1);
     setState(state);
+    refreshBoard();
     simulateSheetSync(state);
   });
 
@@ -160,9 +169,11 @@ export function initAdmin() {
     const reset = cloneDefaultState();
     state.delayMinutes = reset.delayMinutes;
     state.photoStart = reset.photoStart;
-    state.slots = reset.slots;
+    state.groupIntervalMinutes = reset.groupIntervalMinutes;
+    state.groups = reset.groups;
     delayInput.value = String(state.delayMinutes);
     photoStartInput.value = state.photoStart;
+    groupIntervalInput.value = String(state.groupIntervalMinutes);
     refreshBoard();
     setStatus("Données synthétiques restaurées.", "ok");
   });
