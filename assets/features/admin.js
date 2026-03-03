@@ -1,3 +1,6 @@
+// admin.js — corrected version (prevents duplicated listeners + better error visibility)
+// Works with ADMIN_API returning admin state built from sheets with {group_id, group_name, done}
+
 import { ADMIN_API } from "../config.js";
 import { fetchJSONP } from "../jsonp.js";
 import { loadJSONFromStorage, saveJSONToStorage } from "../storage.js";
@@ -11,16 +14,7 @@ const DEFAULT_STATE = {
   delayMinutes: 8,
   photoStart: "2026-06-20T16:00",
   groupIntervalMinutes: 12,
-  groups: [
-    { name: "Famille mariée", done: false },
-    { name: "Témoins", done: false },
-    { name: "Famille mariée + marié", done: false },
-    { name: "Fratrie", done: false },
-    { name: "Famille mariée + mariée", done: false },
-    { name: "Amis proches", done: false },
-    { name: "Cousins", done: false },
-    { name: "Collègues", done: false },
-  ],
+  groups: [],
 };
 
 function cloneDefaultState() {
@@ -34,11 +28,14 @@ function normalizeState(raw) {
   const normalizedGroups = Array.isArray(raw.groups)
     ? raw.groups
         .map((group) => {
-          if (typeof group === "string") return { name: group, done: false };
-          if (group && typeof group.name === "string") {
-            return { name: group.name, done: Boolean(group.done) };
-          }
-          return null;
+          if (!group || typeof group !== "object") return null;
+          const group_id = typeof group.group_id === "string" ? String(group.group_id).trim() : "";
+          if (!group_id) return null;
+          return {
+            group_id,
+            group_name: typeof group.group_name === "string" ? String(group.group_name).trim() : "",
+            done: Boolean(group.done),
+          };
         })
         .filter(Boolean)
     : fallback.groups;
@@ -84,7 +81,7 @@ function renderSchedule(state) {
     (group, index) => `
     <div class="admin-schedule-row ${group.done ? "is-done" : ""}" draggable="true" data-row-index="${index}">
       <span class="admin-schedule-time">${escapeHTML(getPassageTime(state, index))}</span>
-      <span class="admin-schedule-group">${escapeHTML(group.name)}</span>
+      <span class="admin-schedule-group">${escapeHTML(group.group_name || group.group_id)}</span>
       <button
         type="button"
         class="admin-done-btn ${group.done ? "is-done" : ""}"
@@ -119,8 +116,7 @@ function moveRow(state, fromIndex, insertIndex) {
 }
 
 /**
- * ✅ FIX: on empêche d'empiler des listeners à chaque refreshBoard().
- * (Comme tu fais déjà pour desktopDndWired/touchDndWired.)
+ * ✅ Prevent duplicate listeners when refreshBoard() re-renders DOM.
  */
 function wireDoneButtons(state, onChange) {
   document.querySelectorAll("[data-done-index]").forEach((button) => {
@@ -336,7 +332,6 @@ function setStatus(message, tone = "") {
 }
 
 function formatErrorForStatus(error) {
-  // ✅ Ajout demandé: infos utiles pour comprendre le problème
   const name = error?.name ? String(error.name) : "";
   const message = error?.message ? String(error.message) : String(error || "");
   const stack = error?.stack ? String(error.stack) : "";
@@ -409,7 +404,6 @@ export async function initAdmin() {
           ? " Apps Script à mettre à jour (path=admin/action=get|upsert)."
           : "";
         setStatus(`Échec de sync Google Sheet (données conservées localement). ${details}${appScriptHint}`);
-        // Bonus: log console pour debug
         // eslint-disable-next-line no-console
         console.error("Admin sync failed:", error);
       })
@@ -492,13 +486,12 @@ export async function initAdmin() {
   });
 
   resetBtn.addEventListener("click", () => {
-    const reset = cloneDefaultState();
-    state.delayMinutes = reset.delayMinutes;
-    state.photoStart = reset.photoStart;
-    state.groupIntervalMinutes = reset.groupIntervalMinutes;
-    state.groups = reset.groups;
+    // Reset settings only; groups come from sheets
+    state.delayMinutes = DEFAULT_STATE.delayMinutes;
+    state.photoStart = DEFAULT_STATE.photoStart;
+    state.groupIntervalMinutes = DEFAULT_STATE.groupIntervalMinutes;
     renderInputs();
     refreshBoard();
-    queueSync("Données réinitialisées. Synchronisation Google Sheet…", { immediate: true });
+    queueSync("Paramètres réinitialisés. Synchronisation Google Sheet…", { immediate: true });
   });
 }
