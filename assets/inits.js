@@ -6,6 +6,7 @@ import { initPhotos } from "./features/photos.js";
 import { initQuiz } from "./features/quiz.js";
 import { initLeaderboard } from "./features/leaderboard.js";
 import { initWhatsApp } from "./features/whatsapp.js";
+import { initAdmin } from "./features/admin.js";
 
 function loadScores() {
   return loadJSONFromStorage(QUIZ_STORAGE_KEY, []);
@@ -33,6 +34,8 @@ export async function initPage(routePath) {
       });
     case "/whatsapp":
       return initWhatsApp();
+    case "/admin":
+      return initAdmin();
     default:
       return;
   }
