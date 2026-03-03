@@ -1,7 +1,7 @@
 import { loadJSONFromStorage, saveJSONToStorage } from "../storage.js";
 import { escapeHTML } from "../ui.js";
 
-const ADMIN_STATE_KEY = "mariage_admin_state_v4";
+const ADMIN_STATE_KEY = "mariage_admin_state_v5";
 
 const DEFAULT_STATE = {
   delayMinutes: 8,
@@ -83,6 +83,10 @@ function renderSchedule(state) {
     <div class="admin-schedule-row ${group.done ? "is-done" : ""}" draggable="true" data-row-index="${index}">
       <span class="admin-schedule-time">${escapeHTML(getPassageTime(state, index))}</span>
       <span class="admin-schedule-group">${escapeHTML(group.name)}</span>
+      <div class="admin-row-controls">
+        <button type="button" class="admin-move-btn" data-move-dir="up" data-row-index="${index}" aria-label="Monter ce groupe">↑</button>
+        <button type="button" class="admin-move-btn" data-move-dir="down" data-row-index="${index}" aria-label="Descendre ce groupe">↓</button>
+      </div>
       <button
         type="button"
         class="admin-done-btn ${group.done ? "is-done" : ""}"
@@ -91,7 +95,7 @@ function renderSchedule(state) {
       >
         ${group.done ? "✅ Done" : "Done"}
       </button>
-      <span class="admin-schedule-drag">☰</span>
+      <span class="admin-schedule-drag" aria-hidden="true">☰</span>
     </div>
   `);
 
@@ -130,6 +134,27 @@ function wireDoneButtons(state, onChange) {
       if (!Number.isInteger(idx) || idx < 0 || idx >= state.groups.length) return;
       state.groups[idx].done = !state.groups[idx].done;
       onChange();
+    });
+  });
+}
+
+function wireMoveButtons(state, onChange) {
+  document.querySelectorAll("[data-move-dir]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const idx = Number(button.dataset.rowIndex);
+      if (!Number.isInteger(idx)) return;
+
+      if (button.dataset.moveDir === "up" && idx > 0) {
+        moveRow(state, idx, idx - 1);
+        onChange();
+      }
+
+      if (button.dataset.moveDir === "down" && idx < state.groups.length - 1) {
+        moveRow(state, idx, idx + 2);
+        onChange();
+      }
     });
   });
 }
@@ -216,6 +241,7 @@ export function initAdmin() {
     renderSchedule(state);
     setState(state);
     wireDoneButtons(state, refreshBoard);
+    wireMoveButtons(state, refreshBoard);
     wireDragAndDrop(state, refreshBoard);
   };
 
