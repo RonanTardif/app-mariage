@@ -72,7 +72,7 @@ function getPassageTime(state, index) {
   return formatHour(time);
 }
 
-function renderSchedule(state) {
+function renderSchedule(state, selectedIndex) {
   const board = document.getElementById("slotsBoard");
   if (!board) return;
 
@@ -80,7 +80,7 @@ function renderSchedule(state) {
     <div class="admin-drop-zone" data-insert-index="${index}">
       <span>Déposer ici</span>
     </div>
-    <div class="admin-schedule-row ${group.done ? "is-done" : ""}" data-row-index="${index}">
+    <div class="admin-schedule-row ${group.done ? "is-done" : ""} ${selectedIndex === index ? "is-selected" : ""}" data-row-index="${index}">
       <span class="admin-schedule-time">${escapeHTML(getPassageTime(state, index))}</span>
       <span class="admin-schedule-group">${escapeHTML(group.name)}</span>
       <button
@@ -146,7 +146,7 @@ function clearZones(board) {
   board.querySelectorAll(".admin-drop-zone").forEach((zone) => zone.classList.remove("is-active"));
 }
 
-function wireDesktopDragAndDrop(state, onChange, canReorder) {
+function wireDesktopDragAndDrop(state, onChange, setSelectedIndex) {
   const board = document.getElementById("slotsBoard");
   if (!board) return;
 
@@ -154,11 +154,8 @@ function wireDesktopDragAndDrop(state, onChange, canReorder) {
 
   board.querySelectorAll(".admin-drag-handle").forEach((handle) => {
     handle.addEventListener("dragstart", (event) => {
-      if (!canReorder()) {
-        event.preventDefault();
-        return;
-      }
       draggedIndex = Number(handle.dataset.dragIndex);
+      if (Number.isInteger(draggedIndex)) setSelectedIndex(draggedIndex);
       event.dataTransfer?.setData("text/plain", "dragging");
       if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
       board.classList.add("is-dragging");
@@ -175,7 +172,6 @@ function wireDesktopDragAndDrop(state, onChange, canReorder) {
 
   board.querySelectorAll(".admin-drop-zone").forEach((zone) => {
     zone.addEventListener("dragover", (event) => {
-      if (!canReorder()) return;
       event.preventDefault();
       if (draggedIndex == null) return;
       clearZones(board);
@@ -183,18 +179,18 @@ function wireDesktopDragAndDrop(state, onChange, canReorder) {
     });
 
     zone.addEventListener("drop", (event) => {
-      if (!canReorder()) return;
       event.preventDefault();
       if (draggedIndex == null) return;
       const insertIndex = Number(zone.dataset.insertIndex);
-      moveRow(state, draggedIndex, insertIndex);
+      const nextIndex = moveRow(state, draggedIndex, insertIndex);
+      setSelectedIndex(nextIndex);
       clearZones(board);
       onChange();
     });
   });
 }
 
-function wireTouchDragAndDrop(state, onChange, canReorder) {
+function wireTouchDragAndDrop(state, onChange, setSelectedIndex) {
   const board = document.getElementById("slotsBoard");
   if (!board) return;
 
@@ -224,10 +220,10 @@ function wireTouchDragAndDrop(state, onChange, canReorder) {
 
   board.querySelectorAll(".admin-drag-handle").forEach((handle) => {
     handle.addEventListener("touchstart", (event) => {
-      if (!canReorder()) return;
       if (event.touches.length !== 1) return;
 
       draggedIndex = Number(handle.dataset.dragIndex);
+      if (Number.isInteger(draggedIndex)) setSelectedIndex(draggedIndex);
       if (!Number.isInteger(draggedIndex)) return;
 
       activeRow = handle.closest(".admin-schedule-row");
@@ -240,7 +236,6 @@ function wireTouchDragAndDrop(state, onChange, canReorder) {
     }, { passive: true });
 
     handle.addEventListener("touchmove", (event) => {
-      if (!canReorder()) return;
       if (!activeRow || draggedIndex == null || event.touches.length !== 1) return;
       event.preventDefault();
 
@@ -260,12 +255,12 @@ function wireTouchDragAndDrop(state, onChange, canReorder) {
     }, { passive: false });
 
     handle.addEventListener("touchend", () => {
-      if (!canReorder()) return;
       if (!activeRow || draggedIndex == null) return;
 
       if (hasMoved && activeZone) {
         const insertIndex = Number(activeZone.dataset.insertIndex);
-        moveRow(state, draggedIndex, insertIndex);
+        const nextIndex = moveRow(state, draggedIndex, insertIndex);
+        setSelectedIndex(nextIndex);
         cleanup();
         onChange();
         return;
@@ -275,6 +270,33 @@ function wireTouchDragAndDrop(state, onChange, canReorder) {
     }, { passive: true });
 
     handle.addEventListener("touchcancel", cleanup, { passive: true });
+  });
+}
+
+
+function wireSelection(onSelect) {
+  document.querySelectorAll(".admin-schedule-row").forEach((row) => {
+    row.addEventListener("click", () => {
+      const idx = Number(row.dataset.rowIndex);
+      if (Number.isInteger(idx)) onSelect(idx);
+    });
+
+    row.addEventListener("touchstart", () => {
+      const idx = Number(row.dataset.rowIndex);
+      if (Number.isInteger(idx)) onSelect(idx);
+    }, { passive: true });
+  });
+
+  document.querySelectorAll(".admin-drag-handle").forEach((handle) => {
+    handle.addEventListener("mousedown", () => {
+      const idx = Number(handle.dataset.dragIndex);
+      if (Number.isInteger(idx)) onSelect(idx);
+    });
+
+    handle.addEventListener("touchstart", () => {
+      const idx = Number(handle.dataset.dragIndex);
+      if (Number.isInteger(idx)) onSelect(idx);
+    }, { passive: true });
   });
 }
 
@@ -304,18 +326,13 @@ export function initAdmin() {
   const groupIntervalInput = document.getElementById("groupIntervalInput");
   const saveBtn = document.getElementById("saveSettingsBtn");
   const resetBtn = document.getElementById("resetSettingsBtn");
-  const reorderBtn = document.getElementById("toggleReorderBtn");
   const board = document.getElementById("slotsBoard");
 
-  if (!delayInput || !photoStartInput || !groupIntervalInput || !saveBtn || !resetBtn || !reorderBtn || !board) return;
+  if (!delayInput || !photoStartInput || !groupIntervalInput || !saveBtn || !resetBtn || !board) return;
 
-  let reorderMode = false;
-  const canReorder = () => reorderMode;
-
-  const applyReorderMode = () => {
-    board.classList.toggle("is-reorder-enabled", reorderMode);
-    reorderBtn.textContent = reorderMode ? "Terminer la réorganisation" : "Réorganiser les groupes";
-    setStatus(reorderMode ? "Mode réorganisation activé." : "Mode consultation activé.");
+  let selectedIndex = null;
+  const setSelectedIndex = (idx) => {
+    selectedIndex = Number.isInteger(idx) ? idx : null;
   };
 
   delayInput.value = String(state.delayMinutes);
@@ -323,20 +340,16 @@ export function initAdmin() {
   groupIntervalInput.value = String(state.groupIntervalMinutes);
 
   const refreshBoard = () => {
-    renderSchedule(state);
+    renderSchedule(state, selectedIndex);
     setState(state);
     wireDoneButtons(state, refreshBoard);
-    wireDesktopDragAndDrop(state, refreshBoard, canReorder);
-    wireTouchDragAndDrop(state, refreshBoard, canReorder);
-    applyReorderMode();
+    wireSelection((idx) => { setSelectedIndex(idx); refreshBoard(); });
+    wireDesktopDragAndDrop(state, refreshBoard, setSelectedIndex);
+    wireTouchDragAndDrop(state, refreshBoard, setSelectedIndex);
   };
 
   refreshBoard();
 
-  reorderBtn.addEventListener("click", () => {
-    reorderMode = !reorderMode;
-    applyReorderMode();
-  });
 
   saveBtn.addEventListener("click", () => {
     state.photoStart = photoStartInput.value || DEFAULT_STATE.photoStart;

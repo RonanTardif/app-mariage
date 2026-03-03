@@ -549,13 +549,6 @@ button, input { font-family: inherit; }
   background: rgba(255,255,255,0.92);
 }
 
-.admin-toggle-reorder {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: rgba(255,255,255,0.95);
-  padding: 8px 12px;
-  font-weight: 800;
-}
 
 .admin-slots-board {
   display: grid;
@@ -581,7 +574,7 @@ button, input { font-family: inherit; }
   transform: translateY(-2px);
 }
 
-.admin-slots-board.is-reorder-enabled .admin-drop-zone {
+.admin-drop-zone {
   height: 18px;
   opacity: 1;
   pointer-events: auto;
@@ -589,7 +582,7 @@ button, input { font-family: inherit; }
   background: rgba(155, 170, 154, 0.08);
 }
 
-.admin-slots-board.is-reorder-enabled .admin-drop-zone span {
+.admin-drop-zone span {
   opacity: 0.75;
   transform: translateY(0);
 }
@@ -623,6 +616,12 @@ button, input { font-family: inherit; }
 
 .admin-schedule-row.is-done {
   background: rgba(155, 170, 154, 0.18);
+}
+
+.admin-schedule-row.is-selected {
+  border-color: rgba(155, 170, 154, 0.9);
+  background: rgba(155, 170, 154, 0.22);
+  box-shadow: 0 0 0 2px rgba(155, 170, 154, 0.20);
 }
 
 .admin-done-btn {
@@ -661,7 +660,7 @@ button, input { font-family: inherit; }
   opacity: 0.96;
 }
 
-.admin-slots-board.is-reorder-enabled .admin-schedule-row {
+.admin-schedule-row {
   cursor: grab;
 }
 
