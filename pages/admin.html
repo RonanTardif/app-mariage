@@ -1,7 +1,7 @@
 <div class="card">
   <div class="card-inner">
-    <h2 class="card-title">Console orga (prototype)</h2>
-    <p class="card-subtitle">Page cachée (accès direct). Réglages dynamiques simulés avec données synthétiques.</p>
+    <h2 class="card-title">Console orga (mode réel)</h2>
+    <p class="card-subtitle">Page cachée (accès direct). Chargement à l'ouverture depuis Google Sheet puis synchronisation en temps réel à chaque modification.</p>
 
     <div class="hr"></div>
 
@@ -26,16 +26,16 @@
       <button id="saveSettingsBtn" class="btn" type="button">
         <div class="icon sage">💾</div>
         <div class="btn-text">
-          <div class="btn-title">Enregistrer</div>
-          <div class="btn-desc">Simule la MAJ Google Sheet</div>
+          <div class="btn-title">Forcer sync</div>
+          <div class="btn-desc">Déclenche une synchronisation immédiate</div>
         </div>
       </button>
 
       <button id="resetSettingsBtn" class="btn" type="button">
         <div class="icon gray">↩️</div>
         <div class="btn-text">
-          <div class="btn-title">Reset démo</div>
-          <div class="btn-desc">Revenir aux données synthétiques</div>
+          <div class="btn-title">Reset planning</div>
+          <div class="btn-desc">Réinitialise puis resynchronise le Google Sheet</div>
         </div>
       </button>
     </div>

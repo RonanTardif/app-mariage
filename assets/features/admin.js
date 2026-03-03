@@ -1,23 +1,20 @@
+// admin.js — corrected version (prevents duplicated listeners + better error visibility)
+// Works with ADMIN_API returning admin state built from sheets with {group_id, group_name, done}
+
+import { ADMIN_API } from "../config.js";
+import { fetchJSONP } from "../jsonp.js";
 import { loadJSONFromStorage, saveJSONToStorage } from "../storage.js";
 import { escapeHTML } from "../ui.js";
 
 const ADMIN_STATE_KEY = "mariage_admin_state_v7";
 const LONG_PRESS_MS = 220;
+const SYNC_DEBOUNCE_MS = 500;
 
 const DEFAULT_STATE = {
   delayMinutes: 8,
   photoStart: "2026-06-20T16:00",
   groupIntervalMinutes: 12,
-  groups: [
-    { name: "Famille mariée", done: false },
-    { name: "Témoins", done: false },
-    { name: "Famille mariée + marié", done: false },
-    { name: "Fratrie", done: false },
-    { name: "Famille mariée + mariée", done: false },
-    { name: "Amis proches", done: false },
-    { name: "Cousins", done: false },
-    { name: "Collègues", done: false },
-  ],
+  groups: [],
 };
 
 function cloneDefaultState() {
@@ -30,14 +27,17 @@ function normalizeState(raw) {
 
   const normalizedGroups = Array.isArray(raw.groups)
     ? raw.groups
-      .map((group) => {
-        if (typeof group === "string") return { name: group, done: false };
-        if (group && typeof group.name === "string") {
-          return { name: group.name, done: Boolean(group.done) };
-        }
-        return null;
-      })
-      .filter(Boolean)
+        .map((group) => {
+          if (!group || typeof group !== "object") return null;
+          const group_id = typeof group.group_id === "string" ? String(group.group_id).trim() : "";
+          if (!group_id) return null;
+          return {
+            group_id,
+            group_name: typeof group.group_name === "string" ? String(group.group_name).trim() : "",
+            done: Boolean(group.done),
+          };
+        })
+        .filter(Boolean)
     : fallback.groups;
 
   return {
@@ -68,7 +68,7 @@ function formatHour(date) {
 
 function getPassageTime(state, index) {
   const base = toDate(state.photoStart);
-  const offsetMinutes = state.delayMinutes + (index * state.groupIntervalMinutes);
+  const offsetMinutes = state.delayMinutes + index * state.groupIntervalMinutes;
   const time = new Date(base.getTime() + offsetMinutes * 60000);
   return formatHour(time);
 }
@@ -77,10 +77,11 @@ function renderSchedule(state) {
   const board = document.getElementById("slotsBoard");
   if (!board) return;
 
-  const rows = state.groups.map((group, index) => `
+  const rows = state.groups.map(
+    (group, index) => `
     <div class="admin-schedule-row ${group.done ? "is-done" : ""}" draggable="true" data-row-index="${index}">
       <span class="admin-schedule-time">${escapeHTML(getPassageTime(state, index))}</span>
-      <span class="admin-schedule-group">${escapeHTML(group.name)}</span>
+      <span class="admin-schedule-group">${escapeHTML(group.group_name || group.group_id)}</span>
       <button
         type="button"
         class="admin-done-btn ${group.done ? "is-done" : ""}"
@@ -91,7 +92,8 @@ function renderSchedule(state) {
       </button>
       <span class="admin-schedule-drag" aria-hidden="true">☰</span>
     </div>
-  `);
+  `,
+  );
 
   board.innerHTML = rows.join("");
 }
@@ -113,8 +115,14 @@ function moveRow(state, fromIndex, insertIndex) {
   return nextIndex;
 }
 
+/**
+ * ✅ Prevent duplicate listeners when refreshBoard() re-renders DOM.
+ */
 function wireDoneButtons(state, onChange) {
   document.querySelectorAll("[data-done-index]").forEach((button) => {
+    if (button.dataset.doneWired === "1") return;
+    button.dataset.doneWired = "1";
+
     button.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -172,6 +180,9 @@ function wireDesktopDragAndDrop(state, onChange) {
     });
   });
 
+  if (board.dataset.desktopDndWired === "1") return;
+  board.dataset.desktopDndWired = "1";
+
   board.addEventListener("dragover", (event) => {
     if (!Number.isInteger(draggedIndex)) return;
     event.preventDefault();
@@ -190,7 +201,8 @@ function wireDesktopDragAndDrop(state, onChange) {
 
 function wireTouchLongPressReorder(state, onChange) {
   const board = document.getElementById("slotsBoard");
-  if (!board) return;
+  if (!board || board.dataset.touchDndWired === "1") return;
+  board.dataset.touchDndWired = "1";
 
   let pressedRow = null;
   let activeRow = null;
@@ -199,7 +211,6 @@ function wireTouchLongPressReorder(state, onChange) {
   let pressTimer = null;
   let startY = 0;
   let lastY = 0;
-  let rowHeight = 0;
   let isDragging = false;
 
   const rows = () => Array.from(board.querySelectorAll(".admin-schedule-row"));
@@ -245,12 +256,8 @@ function wireTouchLongPressReorder(state, onChange) {
       const idx = Number(row.dataset.rowIndex);
       if (!Number.isInteger(idx) || idx === draggedIndex) return;
 
-      if (insertIndex > draggedIndex && idx > draggedIndex && idx < insertIndex) {
-        row.classList.add("shift-up");
-      }
-      if (insertIndex <= draggedIndex && idx >= insertIndex && idx < draggedIndex) {
-        row.classList.add("shift-down");
-      }
+      if (insertIndex > draggedIndex && idx > draggedIndex && idx < insertIndex) row.classList.add("shift-up");
+      if (insertIndex <= draggedIndex && idx >= insertIndex && idx < draggedIndex) row.classList.add("shift-down");
     });
   };
 
@@ -270,7 +277,6 @@ function wireTouchLongPressReorder(state, onChange) {
       draggedIndex = Number(activeRow.dataset.rowIndex);
       if (!Number.isInteger(draggedIndex)) return;
 
-      rowHeight = activeRow.getBoundingClientRect().height;
       isDragging = true;
       board.classList.add("is-touch-dragging");
       activeRow.classList.add("touch-dragging");
@@ -325,17 +331,39 @@ function setStatus(message, tone = "") {
   if (tone === "ok") status.classList.add("ok");
 }
 
-function simulateSheetSync(state) {
-  setStatus("Synchronisation Google Sheet simulée en cours…");
-  window.setTimeout(() => {
-    setStatus(
-      `Google Sheet simulé mis à jour · début ${state.photoStart} · intervalle ${state.groupIntervalMinutes} min · retard ${state.delayMinutes} min`,
-      "ok",
-    );
-  }, 500);
+function formatErrorForStatus(error) {
+  const name = error?.name ? String(error.name) : "";
+  const message = error?.message ? String(error.message) : String(error || "");
+  const stack = error?.stack ? String(error.stack) : "";
+  const oneLineStack = stack ? ` · ${stack.split("\n")[0]}` : "";
+  const parts = [name, message].filter(Boolean).join(": ");
+  return (parts || "Erreur inconnue") + oneLineStack;
 }
 
-export function initAdmin() {
+function parseRemoteState(payload) {
+  if (!payload || typeof payload !== "object") throw new Error("Réponse invalide");
+  if (typeof payload.error === "string" && payload.error.trim()) throw new Error(payload.error);
+  if (payload.state && typeof payload.state === "object") return payload.state;
+  if (payload.data && typeof payload.data === "object") return payload.data;
+  return payload;
+}
+
+async function fetchAdminStateRemote() {
+  const response = await fetchJSONP(`${ADMIN_API}&action=get`);
+  return normalizeState(parseRemoteState(response));
+}
+
+function createSyncUrl(state) {
+  const encoded = encodeURIComponent(JSON.stringify(state));
+  return `${ADMIN_API}&action=upsert&state=${encoded}`;
+}
+
+async function syncStateToRemote(state) {
+  const response = await fetchJSONP(createSyncUrl(state), { timeoutMs: 10000 });
+  parseRemoteState(response);
+}
+
+export async function initAdmin() {
   const state = getState();
 
   const delayInput = document.getElementById("delayInput");
@@ -346,39 +374,124 @@ export function initAdmin() {
 
   if (!delayInput || !photoStartInput || !groupIntervalInput || !saveBtn || !resetBtn) return;
 
-  delayInput.value = String(state.delayMinutes);
-  photoStartInput.value = state.photoStart;
-  groupIntervalInput.value = String(state.groupIntervalMinutes);
+  let syncTimer = null;
+  let syncRequestInFlight = null;
+
+  const renderInputs = () => {
+    delayInput.value = String(state.delayMinutes);
+    photoStartInput.value = state.photoStart;
+    groupIntervalInput.value = String(state.groupIntervalMinutes);
+  };
+
+  const applyFormToState = () => {
+    state.photoStart = photoStartInput.value || DEFAULT_STATE.photoStart;
+    state.groupIntervalMinutes = Math.max(1, Number(groupIntervalInput.value) || 1);
+    state.delayMinutes = Math.max(0, Number(delayInput.value) || 0);
+  };
+
+  const flushSync = async () => {
+    if (syncRequestInFlight) return syncRequestInFlight;
+
+    setStatus("Synchronisation Google Sheet en cours…");
+
+    syncRequestInFlight = syncStateToRemote(state)
+      .then(() => {
+        setStatus("Google Sheet synchronisé en temps réel.", "ok");
+      })
+      .catch((error) => {
+        const details = formatErrorForStatus(error);
+        const appScriptHint = details.includes("Unknown path")
+          ? " Apps Script à mettre à jour (path=admin/action=get|upsert)."
+          : "";
+        setStatus(`Échec de sync Google Sheet (données conservées localement). ${details}${appScriptHint}`);
+        // eslint-disable-next-line no-console
+        console.error("Admin sync failed:", error);
+      })
+      .finally(() => {
+        syncRequestInFlight = null;
+      });
+
+    return syncRequestInFlight;
+  };
+
+  const queueSync = (pendingMessage = "Changements détectés. Synchronisation…", { immediate = false } = {}) => {
+    setStatus(pendingMessage);
+    window.clearTimeout(syncTimer);
+    if (immediate) {
+      flushSync();
+      return;
+    }
+    syncTimer = window.setTimeout(() => {
+      flushSync();
+    }, SYNC_DEBOUNCE_MS);
+  };
 
   const refreshBoard = () => {
     renderSchedule(state);
     setState(state);
-    wireDoneButtons(state, refreshBoard);
-    wireDesktopDragAndDrop(state, refreshBoard);
-    wireTouchLongPressReorder(state, refreshBoard);
+
+    wireDoneButtons(state, () => {
+      refreshBoard();
+      queueSync("Modification enregistrée localement…");
+    });
+
+    wireDesktopDragAndDrop(state, () => {
+      refreshBoard();
+      queueSync("Réorganisation enregistrée localement…");
+    });
+
+    wireTouchLongPressReorder(state, () => {
+      refreshBoard();
+      queueSync("Réorganisation mobile enregistrée localement…");
+    });
   };
 
   refreshBoard();
+  renderInputs();
+
+  setStatus("Chargement depuis Google Sheet…");
+  try {
+    const remoteState = await fetchAdminStateRemote();
+    state.delayMinutes = remoteState.delayMinutes;
+    state.photoStart = remoteState.photoStart;
+    state.groupIntervalMinutes = remoteState.groupIntervalMinutes;
+    state.groups = remoteState.groups;
+    renderInputs();
+    refreshBoard();
+    setStatus("Configuration chargée depuis Google Sheet.", "ok");
+  } catch (error) {
+    const details = formatErrorForStatus(error);
+    const appScriptHint = details.includes("Unknown path")
+      ? " Apps Script à mettre à jour (path=admin/action=get|upsert)."
+      : "";
+    setStatus(`Google Sheet indisponible, mode local actif. ${details}${appScriptHint}`);
+    // eslint-disable-next-line no-console
+    console.error("Admin load failed:", error);
+  }
+
+  const onInputRealtime = () => {
+    applyFormToState();
+    refreshBoard();
+    queueSync("Paramètres modifiés. Synchronisation Google Sheet…");
+  };
+
+  delayInput.addEventListener("change", onInputRealtime);
+  photoStartInput.addEventListener("change", onInputRealtime);
+  groupIntervalInput.addEventListener("change", onInputRealtime);
 
   saveBtn.addEventListener("click", () => {
-    state.photoStart = photoStartInput.value || DEFAULT_STATE.photoStart;
-    state.groupIntervalMinutes = Math.max(1, Number(groupIntervalInput.value) || 1);
-    state.delayMinutes = Math.max(0, Number(delayInput.value) || 0);
-    setState(state);
+    applyFormToState();
     refreshBoard();
-    simulateSheetSync(state);
+    queueSync("Modifications appliquées. Synchronisation Google Sheet immédiate…", { immediate: true });
   });
 
   resetBtn.addEventListener("click", () => {
-    const reset = cloneDefaultState();
-    state.delayMinutes = reset.delayMinutes;
-    state.photoStart = reset.photoStart;
-    state.groupIntervalMinutes = reset.groupIntervalMinutes;
-    state.groups = reset.groups;
-    delayInput.value = String(state.delayMinutes);
-    photoStartInput.value = state.photoStart;
-    groupIntervalInput.value = String(state.groupIntervalMinutes);
+    // Reset settings only; groups come from sheets
+    state.delayMinutes = DEFAULT_STATE.delayMinutes;
+    state.photoStart = DEFAULT_STATE.photoStart;
+    state.groupIntervalMinutes = DEFAULT_STATE.groupIntervalMinutes;
+    renderInputs();
     refreshBoard();
-    setStatus("Données synthétiques restaurées.", "ok");
+    queueSync("Paramètres réinitialisés. Synchronisation Google Sheet…", { immediate: true });
   });
 }
