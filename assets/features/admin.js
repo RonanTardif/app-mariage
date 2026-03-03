@@ -100,15 +100,21 @@ function renderSchedule(state) {
     .join("");
 }
 
-function moveRow(state, fromIndex, toIndex) {
+function moveRow(state, fromIndex, insertIndex) {
   const start = Number(fromIndex);
-  const end = Number(toIndex);
-  if (!Number.isInteger(start) || !Number.isInteger(end)) return;
-  if (start === end || start < 0 || end < 0) return;
-  if (start >= state.groups.length || end >= state.groups.length) return;
+  let target = Number(insertIndex);
+  if (!Number.isInteger(start) || !Number.isInteger(target)) return start;
+  if (start < 0 || target < 0 || start >= state.groups.length) return start;
+
+  if (target > state.groups.length) target = state.groups.length;
+  if (target === start || target === start + 1) return start;
 
   const [moved] = state.groups.splice(start, 1);
-  state.groups.splice(end, 0, moved);
+  if (!moved) return start;
+
+  const nextIndex = target > start ? target - 1 : target;
+  state.groups.splice(nextIndex, 0, moved);
+  return nextIndex;
 }
 
 function wireDoneButtons(state, onChange) {
@@ -126,33 +132,60 @@ function wireDoneButtons(state, onChange) {
 
 function wireDragAndDrop(state, onChange) {
   let draggedIndex = null;
+  let lastInsertIndex = null;
+
+  const clearInsertHints = () => {
+    document.querySelectorAll(".admin-schedule-row").forEach((row) => {
+      row.classList.remove("insert-before", "insert-after");
+    });
+  };
 
   document.querySelectorAll(".admin-schedule-row").forEach((node) => {
     node.addEventListener("dragstart", (event) => {
-      draggedIndex = node.dataset.rowIndex;
+      draggedIndex = Number(node.dataset.rowIndex);
+      lastInsertIndex = null;
       event.dataTransfer?.setData("text/plain", "dragging");
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
       node.classList.add("dragging");
     });
 
     node.addEventListener("dragend", () => {
       draggedIndex = null;
+      lastInsertIndex = null;
+      clearInsertHints();
       node.classList.remove("dragging");
     });
 
     node.addEventListener("dragover", (event) => {
       event.preventDefault();
-      node.classList.add("is-drop-target");
+      if (draggedIndex == null) return;
+
+      const rowIndex = Number(node.dataset.rowIndex);
+      if (!Number.isInteger(rowIndex)) return;
+
+      const rect = node.getBoundingClientRect();
+      const isAfter = (event.clientY - rect.top) > (rect.height / 2);
+      const insertIndex = isAfter ? rowIndex + 1 : rowIndex;
+
+      clearInsertHints();
+      node.classList.add(isAfter ? "insert-after" : "insert-before");
+
+      if (insertIndex === lastInsertIndex) return;
+      const nextDragged = moveRow(state, draggedIndex, insertIndex);
+      if (nextDragged === draggedIndex) return;
+
+      draggedIndex = nextDragged;
+      lastInsertIndex = insertIndex;
+      onChange();
     });
 
     node.addEventListener("dragleave", () => {
-      node.classList.remove("is-drop-target");
+      node.classList.remove("insert-before", "insert-after");
     });
 
     node.addEventListener("drop", (event) => {
       event.preventDefault();
-      node.classList.remove("is-drop-target");
-      if (draggedIndex == null) return;
-      moveRow(state, draggedIndex, node.dataset.rowIndex);
+      clearInsertHints();
       onChange();
     });
   });
