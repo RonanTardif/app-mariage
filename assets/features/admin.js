@@ -33,14 +33,14 @@ function normalizeState(raw) {
 
   const normalizedGroups = Array.isArray(raw.groups)
     ? raw.groups
-      .map((group) => {
-        if (typeof group === "string") return { name: group, done: false };
-        if (group && typeof group.name === "string") {
-          return { name: group.name, done: Boolean(group.done) };
-        }
-        return null;
-      })
-      .filter(Boolean)
+        .map((group) => {
+          if (typeof group === "string") return { name: group, done: false };
+          if (group && typeof group.name === "string") {
+            return { name: group.name, done: Boolean(group.done) };
+          }
+          return null;
+        })
+        .filter(Boolean)
     : fallback.groups;
 
   return {
@@ -71,7 +71,7 @@ function formatHour(date) {
 
 function getPassageTime(state, index) {
   const base = toDate(state.photoStart);
-  const offsetMinutes = state.delayMinutes + (index * state.groupIntervalMinutes);
+  const offsetMinutes = state.delayMinutes + index * state.groupIntervalMinutes;
   const time = new Date(base.getTime() + offsetMinutes * 60000);
   return formatHour(time);
 }
@@ -80,7 +80,8 @@ function renderSchedule(state) {
   const board = document.getElementById("slotsBoard");
   if (!board) return;
 
-  const rows = state.groups.map((group, index) => `
+  const rows = state.groups.map(
+    (group, index) => `
     <div class="admin-schedule-row ${group.done ? "is-done" : ""}" draggable="true" data-row-index="${index}">
       <span class="admin-schedule-time">${escapeHTML(getPassageTime(state, index))}</span>
       <span class="admin-schedule-group">${escapeHTML(group.name)}</span>
@@ -94,7 +95,8 @@ function renderSchedule(state) {
       </button>
       <span class="admin-schedule-drag" aria-hidden="true">☰</span>
     </div>
-  `);
+  `,
+  );
 
   board.innerHTML = rows.join("");
 }
@@ -116,8 +118,15 @@ function moveRow(state, fromIndex, insertIndex) {
   return nextIndex;
 }
 
+/**
+ * ✅ FIX: on empêche d'empiler des listeners à chaque refreshBoard().
+ * (Comme tu fais déjà pour desktopDndWired/touchDndWired.)
+ */
 function wireDoneButtons(state, onChange) {
   document.querySelectorAll("[data-done-index]").forEach((button) => {
+    if (button.dataset.doneWired === "1") return;
+    button.dataset.doneWired = "1";
+
     button.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -251,12 +260,8 @@ function wireTouchLongPressReorder(state, onChange) {
       const idx = Number(row.dataset.rowIndex);
       if (!Number.isInteger(idx) || idx === draggedIndex) return;
 
-      if (insertIndex > draggedIndex && idx > draggedIndex && idx < insertIndex) {
-        row.classList.add("shift-up");
-      }
-      if (insertIndex <= draggedIndex && idx >= insertIndex && idx < draggedIndex) {
-        row.classList.add("shift-down");
-      }
+      if (insertIndex > draggedIndex && idx > draggedIndex && idx < insertIndex) row.classList.add("shift-up");
+      if (insertIndex <= draggedIndex && idx >= insertIndex && idx < draggedIndex) row.classList.add("shift-down");
     });
   };
 
@@ -330,6 +335,16 @@ function setStatus(message, tone = "") {
   if (tone === "ok") status.classList.add("ok");
 }
 
+function formatErrorForStatus(error) {
+  // ✅ Ajout demandé: infos utiles pour comprendre le problème
+  const name = error?.name ? String(error.name) : "";
+  const message = error?.message ? String(error.message) : String(error || "");
+  const stack = error?.stack ? String(error.stack) : "";
+  const oneLineStack = stack ? ` · ${stack.split("\n")[0]}` : "";
+  const parts = [name, message].filter(Boolean).join(": ");
+  return (parts || "Erreur inconnue") + oneLineStack;
+}
+
 function parseRemoteState(payload) {
   if (!payload || typeof payload !== "object") throw new Error("Réponse invalide");
   if (typeof payload.error === "string" && payload.error.trim()) throw new Error(payload.error);
@@ -383,16 +398,20 @@ export async function initAdmin() {
     if (syncRequestInFlight) return syncRequestInFlight;
 
     setStatus("Synchronisation Google Sheet en cours…");
+
     syncRequestInFlight = syncStateToRemote(state)
       .then(() => {
         setStatus("Google Sheet synchronisé en temps réel.", "ok");
       })
       .catch((error) => {
-        const details = String(error?.message || "");
+        const details = formatErrorForStatus(error);
         const appScriptHint = details.includes("Unknown path")
           ? " Apps Script à mettre à jour (path=admin/action=get|upsert)."
           : "";
-        setStatus(`Échec de sync Google Sheet (données conservées localement).${appScriptHint}`);
+        setStatus(`Échec de sync Google Sheet (données conservées localement). ${details}${appScriptHint}`);
+        // Bonus: log console pour debug
+        // eslint-disable-next-line no-console
+        console.error("Admin sync failed:", error);
       })
       .finally(() => {
         syncRequestInFlight = null;
@@ -416,14 +435,17 @@ export async function initAdmin() {
   const refreshBoard = () => {
     renderSchedule(state);
     setState(state);
+
     wireDoneButtons(state, () => {
       refreshBoard();
       queueSync("Modification enregistrée localement…");
     });
+
     wireDesktopDragAndDrop(state, () => {
       refreshBoard();
       queueSync("Réorganisation enregistrée localement…");
     });
+
     wireTouchLongPressReorder(state, () => {
       refreshBoard();
       queueSync("Réorganisation mobile enregistrée localement…");
@@ -444,11 +466,13 @@ export async function initAdmin() {
     refreshBoard();
     setStatus("Configuration chargée depuis Google Sheet.", "ok");
   } catch (error) {
-    const details = String(error?.message || "");
+    const details = formatErrorForStatus(error);
     const appScriptHint = details.includes("Unknown path")
       ? " Apps Script à mettre à jour (path=admin/action=get|upsert)."
       : "";
-    setStatus(`Google Sheet indisponible, mode local actif.${appScriptHint}`);
+    setStatus(`Google Sheet indisponible, mode local actif. ${details}${appScriptHint}`);
+    // eslint-disable-next-line no-console
+    console.error("Admin load failed:", error);
   }
 
   const onInputRealtime = () => {
