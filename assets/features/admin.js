@@ -88,10 +88,10 @@ function renderSchedule(state) {
           <span class="admin-schedule-group">${escapeHTML(group.name)}</span>
           <button
             type="button"
-            class="admin-done-btn ${group.done ? "is-done" : ""}"
+            class="admin-done-btn ${group.done ? "is-done" : ""}" aria-label="Marquer le groupe comme fait"
             data-done-index="${index}"
           >
-            ${group.done ? "Done ✓" : "Done"}
+            ${group.done ? "✅ Done" : "Done"}
           </button>
           <span class="admin-schedule-drag">☰</span>
         </div>

@@ -607,3 +607,29 @@ button, input { font-family: inherit; }
   outline: 2px dashed rgba(155, 170, 154, 0.8);
   outline-offset: 2px;
 }
+
+
+.admin-done-btn {
+  min-width: 78px;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .admin-schedule-row {
+    grid-template-columns: 62px 1fr auto;
+    grid-template-areas:
+      "time group drag"
+      "time done done";
+    align-items: start;
+  }
+
+  .admin-schedule-time { grid-area: time; }
+  .admin-schedule-group { grid-area: group; }
+  .admin-schedule-drag { grid-area: drag; }
+  .admin-done-btn {
+    grid-area: done;
+    justify-self: end;
+    margin-top: 4px;
+  }
+}
