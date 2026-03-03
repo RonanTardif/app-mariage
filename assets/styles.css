@@ -563,7 +563,7 @@ button, input { font-family: inherit; }
   place-items: center;
   color: rgba(28, 28, 28, 0.45);
   font-size: 10px;
-  transition: all 120ms ease;
+  transition: all 90ms ease;
 }
 
 .admin-drop-zone span {
@@ -631,6 +631,27 @@ button, input { font-family: inherit; }
   font-size: 18px;
 }
 
+
+.admin-schedule-row {
+  will-change: transform;
+}
+
+.admin-schedule-row.touch-dragging {
+  z-index: 3;
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.16);
+  opacity: 0.96;
+}
+
+.admin-slots-board.is-touch-dragging .admin-drop-zone {
+  height: 22px;
+  border-color: rgba(155, 170, 154, 0.55);
+  background: rgba(155, 170, 154, 0.12);
+}
+
+.admin-slots-board.is-touch-dragging .admin-drop-zone span {
+  opacity: 0.9;
+  transform: translateY(0);
+}
 .admin-schedule-row.dragging {
   opacity: 0.45;
 }

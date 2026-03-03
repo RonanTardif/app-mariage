@@ -183,6 +183,92 @@ function wireDragAndDrop(state, onChange) {
   });
 }
 
+
+function wireTouchDragAndDrop(state, onChange) {
+  let draggedIndex = null;
+  let activeZone = null;
+  let activeRow = null;
+  let startY = 0;
+  let hasMoved = false;
+
+  const board = document.getElementById("slotsBoard");
+  if (!board) return;
+
+  const clearZones = () => {
+    document.querySelectorAll(".admin-drop-zone").forEach((zone) => {
+      zone.classList.remove("is-active");
+    });
+    activeZone = null;
+  };
+
+  const cleanup = () => {
+    clearZones();
+    board.classList.remove("is-touch-dragging");
+    if (activeRow) {
+      activeRow.classList.remove("touch-dragging");
+      activeRow.style.transform = "";
+    }
+    activeRow = null;
+    draggedIndex = null;
+    hasMoved = false;
+  };
+
+  const zoneAtPoint = (x, y) => {
+    const candidates = document.elementsFromPoint(x, y);
+    return candidates.find((node) => node.classList?.contains("admin-drop-zone")) || null;
+  };
+
+  document.querySelectorAll(".admin-schedule-row").forEach((row) => {
+    row.addEventListener("touchstart", (event) => {
+      if (event.touches.length !== 1) return;
+      if (event.target.closest(".admin-done-btn")) return;
+
+      draggedIndex = Number(row.dataset.rowIndex);
+      if (!Number.isInteger(draggedIndex)) return;
+
+      activeRow = row;
+      startY = event.touches[0].clientY;
+      hasMoved = false;
+      board.classList.add("is-touch-dragging");
+      row.classList.add("touch-dragging");
+    }, { passive: true });
+
+    row.addEventListener("touchmove", (event) => {
+      if (!activeRow || draggedIndex == null || event.touches.length !== 1) return;
+      event.preventDefault();
+      const touch = event.touches[0];
+      const deltaY = touch.clientY - startY;
+      if (Math.abs(deltaY) > 3) hasMoved = true;
+      activeRow.style.transform = `translateY(${deltaY}px) scale(1.01)`;
+
+      const zone = zoneAtPoint(touch.clientX, touch.clientY);
+      if (zone === activeZone) return;
+
+      clearZones();
+      if (zone) {
+        zone.classList.add("is-active");
+        activeZone = zone;
+      }
+    }, { passive: false });
+
+    row.addEventListener("touchend", () => {
+      if (!activeRow || draggedIndex == null) return;
+
+      if (hasMoved && activeZone) {
+        const insertIndex = Number(activeZone.dataset.insertIndex);
+        moveRow(state, draggedIndex, insertIndex);
+        cleanup();
+        onChange();
+        return;
+      }
+
+      cleanup();
+    }, { passive: true });
+
+    row.addEventListener("touchcancel", cleanup, { passive: true });
+  });
+}
+
 function setStatus(message, tone = "") {
   const status = document.getElementById("adminSyncStatus");
   if (!status) return;
@@ -221,6 +307,7 @@ export function initAdmin() {
     setState(state);
     wireDoneButtons(state, refreshBoard);
     wireDragAndDrop(state, refreshBoard);
+    wireTouchDragAndDrop(state, refreshBoard);
   };
 
   refreshBoard();
