@@ -1,7 +1,7 @@
 import { loadJSONFromStorage, saveJSONToStorage } from "../storage.js";
 import { escapeHTML } from "../ui.js";
 
-const ADMIN_STATE_KEY = "mariage_admin_state_v3";
+const ADMIN_STATE_KEY = "mariage_admin_state_v4";
 
 const DEFAULT_STATE = {
   delayMinutes: 8,
@@ -29,14 +29,14 @@ function normalizeState(raw) {
 
   const normalizedGroups = Array.isArray(raw.groups)
     ? raw.groups
-        .map((group) => {
-          if (typeof group === "string") return { name: group, done: false };
-          if (group && typeof group.name === "string") {
-            return { name: group.name, done: Boolean(group.done) };
-          }
-          return null;
-        })
-        .filter(Boolean)
+      .map((group) => {
+        if (typeof group === "string") return { name: group, done: false };
+        if (group && typeof group.name === "string") {
+          return { name: group.name, done: Boolean(group.done) };
+        }
+        return null;
+      })
+      .filter(Boolean)
     : fallback.groups;
 
   return {
@@ -76,28 +76,32 @@ function renderSchedule(state) {
   const board = document.getElementById("slotsBoard");
   if (!board) return;
 
-  board.innerHTML = state.groups
-    .map(
-      (group, index) => `
-        <div
-          class="admin-schedule-row ${group.done ? "is-done" : ""}"
-          draggable="true"
-          data-row-index="${index}"
-        >
-          <span class="admin-schedule-time">${escapeHTML(getPassageTime(state, index))}</span>
-          <span class="admin-schedule-group">${escapeHTML(group.name)}</span>
-          <button
-            type="button"
-            class="admin-done-btn ${group.done ? "is-done" : ""}" aria-label="Marquer le groupe comme fait"
-            data-done-index="${index}"
-          >
-            ${group.done ? "✅ Done" : "Done"}
-          </button>
-          <span class="admin-schedule-drag">☰</span>
-        </div>
-      `,
-    )
-    .join("");
+  const rows = state.groups.map((group, index) => `
+    <div class="admin-drop-zone" data-insert-index="${index}">
+      <span>Déposer ici</span>
+    </div>
+    <div class="admin-schedule-row ${group.done ? "is-done" : ""}" draggable="true" data-row-index="${index}">
+      <span class="admin-schedule-time">${escapeHTML(getPassageTime(state, index))}</span>
+      <span class="admin-schedule-group">${escapeHTML(group.name)}</span>
+      <button
+        type="button"
+        class="admin-done-btn ${group.done ? "is-done" : ""}"
+        aria-label="Marquer le groupe comme fait"
+        data-done-index="${index}"
+      >
+        ${group.done ? "✅ Done" : "Done"}
+      </button>
+      <span class="admin-schedule-drag">☰</span>
+    </div>
+  `);
+
+  rows.push(`
+    <div class="admin-drop-zone" data-insert-index="${state.groups.length}">
+      <span>Déposer ici</span>
+    </div>
+  `);
+
+  board.innerHTML = rows.join("");
 }
 
 function moveRow(state, fromIndex, insertIndex) {
@@ -132,60 +136,44 @@ function wireDoneButtons(state, onChange) {
 
 function wireDragAndDrop(state, onChange) {
   let draggedIndex = null;
-  let lastInsertIndex = null;
 
-  const clearInsertHints = () => {
-    document.querySelectorAll(".admin-schedule-row").forEach((row) => {
-      row.classList.remove("insert-before", "insert-after");
+  const clearZones = () => {
+    document.querySelectorAll(".admin-drop-zone").forEach((zone) => {
+      zone.classList.remove("is-active");
     });
   };
 
-  document.querySelectorAll(".admin-schedule-row").forEach((node) => {
-    node.addEventListener("dragstart", (event) => {
-      draggedIndex = Number(node.dataset.rowIndex);
-      lastInsertIndex = null;
+  document.querySelectorAll(".admin-schedule-row").forEach((row) => {
+    row.addEventListener("dragstart", (event) => {
+      draggedIndex = Number(row.dataset.rowIndex);
       event.dataTransfer?.setData("text/plain", "dragging");
-      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-      node.classList.add("dragging");
+      if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+      row.classList.add("dragging");
+      document.getElementById("slotsBoard")?.classList.add("is-dragging");
     });
 
-    node.addEventListener("dragend", () => {
+    row.addEventListener("dragend", () => {
       draggedIndex = null;
-      lastInsertIndex = null;
-      clearInsertHints();
-      node.classList.remove("dragging");
+      row.classList.remove("dragging");
+      document.getElementById("slotsBoard")?.classList.remove("is-dragging");
+      clearZones();
     });
+  });
 
-    node.addEventListener("dragover", (event) => {
+  document.querySelectorAll(".admin-drop-zone").forEach((zone) => {
+    zone.addEventListener("dragover", (event) => {
       event.preventDefault();
       if (draggedIndex == null) return;
-
-      const rowIndex = Number(node.dataset.rowIndex);
-      if (!Number.isInteger(rowIndex)) return;
-
-      const rect = node.getBoundingClientRect();
-      const isAfter = (event.clientY - rect.top) > (rect.height / 2);
-      const insertIndex = isAfter ? rowIndex + 1 : rowIndex;
-
-      clearInsertHints();
-      node.classList.add(isAfter ? "insert-after" : "insert-before");
-
-      if (insertIndex === lastInsertIndex) return;
-      const nextDragged = moveRow(state, draggedIndex, insertIndex);
-      if (nextDragged === draggedIndex) return;
-
-      draggedIndex = nextDragged;
-      lastInsertIndex = insertIndex;
-      onChange();
+      clearZones();
+      zone.classList.add("is-active");
     });
 
-    node.addEventListener("dragleave", () => {
-      node.classList.remove("insert-before", "insert-after");
-    });
-
-    node.addEventListener("drop", (event) => {
+    zone.addEventListener("drop", (event) => {
       event.preventDefault();
-      clearInsertHints();
+      if (draggedIndex == null) return;
+      const insertIndex = Number(zone.dataset.insertIndex);
+      moveRow(state, draggedIndex, insertIndex);
+      clearZones();
       onChange();
     });
   });
