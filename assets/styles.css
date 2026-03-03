@@ -593,7 +593,7 @@ button, input { font-family: inherit; }
   background: rgba(255, 255, 255, 0.92);
   padding: 10px 12px;
   display: grid;
-  grid-template-columns: 72px 1fr auto auto auto;
+  grid-template-columns: 72px 1fr auto auto;
   align-items: center;
   gap: 10px;
   cursor: grab;
@@ -613,21 +613,6 @@ button, input { font-family: inherit; }
   background: rgba(155, 170, 154, 0.18);
 }
 
-
-.admin-row-controls {
-  display: inline-flex;
-  gap: 6px;
-}
-
-.admin-move-btn {
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 10px;
-  width: 28px;
-  height: 28px;
-  font-weight: 900;
-  line-height: 1;
-}
 .admin-done-btn {
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.95);
@@ -661,25 +646,16 @@ button, input { font-family: inherit; }
     grid-template-columns: 62px 1fr auto;
     grid-template-areas:
       "time group drag"
-      "time controls done";
+      "time done done";
     align-items: start;
   }
 
   .admin-schedule-time { grid-area: time; }
   .admin-schedule-group { grid-area: group; }
   .admin-schedule-drag { grid-area: drag; }
-  .admin-row-controls { grid-area: controls; }
-  .admin-row-controls {
-    grid-area: controls;
-    justify-self: start;
-    margin-top: 4px;
-  }
   .admin-done-btn {
     grid-area: done;
     justify-self: end;
     margin-top: 4px;
-  }
-  .admin-schedule-drag {
-    display: none;
   }
 }
