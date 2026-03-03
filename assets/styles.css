@@ -535,3 +535,164 @@ button, input { font-family: inherit; }
   .programme-hero-time { font-size: 20px; }
   .programme-hero-title { font-size: 16px; }
 }
+
+.admin-field {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-field input {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.92);
+}
+
+.admin-slots-board {
+  --row-gap: 8px;
+  --row-height: 62px;
+  display: grid;
+  gap: var(--row-gap);
+}
+
+
+.admin-drop-zone {
+  height: 0;
+  border-radius: 999px;
+  border: 1px dashed transparent;
+  display: grid;
+  place-items: center;
+  color: rgba(28, 28, 28, 0.45);
+  font-size: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 90ms ease;
+}
+
+.admin-drop-zone span {
+  opacity: 0;
+  transform: translateY(-2px);
+}
+
+.admin-slots-board.is-dragging .admin-drop-zone,
+.admin-slots-board.is-touch-dragging .admin-drop-zone {
+  height: 18px;
+  opacity: 1;
+  pointer-events: auto;
+  border-color: rgba(155, 170, 154, 0.45);
+  background: rgba(155, 170, 154, 0.08);
+}
+
+.admin-slots-board.is-dragging .admin-drop-zone span,
+.admin-slots-board.is-touch-dragging .admin-drop-zone span {
+  opacity: 0.75;
+  transform: translateY(0);
+}
+
+.admin-drop-zone.is-active {
+  border-color: rgba(155, 170, 154, 0.9) !important;
+  background: rgba(155, 170, 154, 0.2) !important;
+}
+.admin-schedule-row {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 72px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  cursor: grab;
+  text-align: left;
+  transition: transform 140ms ease, box-shadow 140ms ease, opacity 120ms ease;
+}
+
+.admin-schedule-time {
+  font-weight: 900;
+}
+
+.admin-schedule-group {
+  font-weight: 700;
+}
+
+
+.admin-schedule-row.is-done {
+  background: rgba(155, 170, 154, 0.18);
+}
+
+.admin-done-btn {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-done-btn.is-done {
+  background: rgba(155, 170, 154, 0.35);
+  border-color: rgba(155, 170, 154, 0.7);
+}
+.admin-schedule-drag {
+  color: rgba(28, 28, 28, 0.55);
+  font-size: 18px;
+  user-select: none;
+}
+
+
+.admin-schedule-row {
+  will-change: transform;
+}
+
+.admin-schedule-row.touch-dragging {
+  z-index: 3;
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.16);
+  opacity: 0.96;
+}
+
+.admin-schedule-row.shift-up {
+  transform: translateY(calc(-1 * (var(--row-gap, 8px) + var(--row-height, 60px))));
+}
+
+.admin-schedule-row.shift-down {
+  transform: translateY(calc(var(--row-gap, 8px) + var(--row-height, 60px)));
+}
+
+
+.admin-schedule-row.dragging {
+  opacity: 0.45;
+}
+
+.admin-done-btn {
+  min-width: 78px;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .admin-schedule-row {
+    grid-template-columns: 62px 1fr auto;
+    grid-template-areas:
+      "time group drag"
+      "time done done";
+    align-items: start;
+  }
+
+  .admin-schedule-time { grid-area: time; }
+  .admin-schedule-group { grid-area: group; }
+  .admin-schedule-drag { grid-area: drag; justify-self: end; }
+  .admin-done-btn {
+    grid-area: done;
+    justify-self: end;
+    margin-top: 4px;
+  }
+}
+
+
+/* Legacy fallback: hide old arrow-based controls if they are still present from stale cache */
+.admin-row-controls,
+.admin-move-btn {
+  display: none !important;
+}

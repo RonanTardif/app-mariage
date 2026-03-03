@@ -8,6 +8,7 @@ export const routes = {
   "/leaderboard": { file: "./pages/leaderboard.html", title: "Leaderboard" },
   "/infos": { file: "./pages/infos.html", title: "Infos pratiques" },
   "/whatsapp": { file: "./pages/whatsapp.html", title: "WhatsApp" },
+  "/admin": { file: "./pages/admin.html", title: "Console orga" },
 };
 
 export function getRouteFromHash() {
