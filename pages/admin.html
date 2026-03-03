@@ -46,8 +46,11 @@
 
 <div class="card">
   <div class="card-inner">
-    <h3 class="card-title">Planning photos (une ligne par groupe)</h3>
-    <p class="card-subtitle">Glisse-dépose un groupe entre les zones "Déposer ici" (mobile et PC), puis clique sur Done quand le groupe est passé. Glisse: appuie et bouge directement la ligne pour un déplacement fluide. (Pas de flèches dans cette version)</p>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+      <h3 class="card-title" style="margin:0;">Planning photos (une ligne par groupe)</h3>
+      <button id="toggleReorderBtn" type="button" class="admin-toggle-reorder">Réorganiser les groupes</button>
+    </div>
+    <p class="card-subtitle" style="margin-top:8px;">Sur mobile: fais défiler normalement. Active "Réorganiser les groupes" uniquement quand tu veux glisser-déposer.</p>
 
     <div id="slotsBoard" class="admin-slots-board" style="margin-top:12px;"></div>
   </div>

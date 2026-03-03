@@ -549,6 +549,14 @@ button, input { font-family: inherit; }
   background: rgba(255,255,255,0.92);
 }
 
+.admin-toggle-reorder {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.95);
+  padding: 8px 12px;
+  font-weight: 800;
+}
+
 .admin-slots-board {
   display: grid;
   gap: 8px;
@@ -556,13 +564,15 @@ button, input { font-family: inherit; }
 
 
 .admin-drop-zone {
-  height: 8px;
+  height: 0;
   border-radius: 999px;
   border: 1px dashed transparent;
   display: grid;
   place-items: center;
   color: rgba(28, 28, 28, 0.45);
   font-size: 10px;
+  opacity: 0;
+  pointer-events: none;
   transition: all 90ms ease;
 }
 
@@ -571,14 +581,16 @@ button, input { font-family: inherit; }
   transform: translateY(-2px);
 }
 
-.admin-slots-board.is-dragging .admin-drop-zone {
-  height: 20px;
+.admin-slots-board.is-reorder-enabled .admin-drop-zone {
+  height: 18px;
+  opacity: 1;
+  pointer-events: auto;
   border-color: rgba(155, 170, 154, 0.45);
   background: rgba(155, 170, 154, 0.08);
 }
 
-.admin-slots-board.is-dragging .admin-drop-zone span {
-  opacity: 0.8;
+.admin-slots-board.is-reorder-enabled .admin-drop-zone span {
+  opacity: 0.75;
   transform: translateY(0);
 }
 
@@ -596,7 +608,7 @@ button, input { font-family: inherit; }
   grid-template-columns: 72px 1fr auto auto;
   align-items: center;
   gap: 10px;
-  cursor: grab;
+  cursor: default;
   text-align: left;
 }
 
@@ -626,9 +638,16 @@ button, input { font-family: inherit; }
   background: rgba(155, 170, 154, 0.35);
   border-color: rgba(155, 170, 154, 0.7);
 }
-.admin-schedule-drag {
-  color: rgba(28, 28, 28, 0.55);
+.admin-drag-handle {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.95);
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
   font-size: 18px;
+  color: rgba(28, 28, 28, 0.65);
+  touch-action: none;
+  cursor: default;
 }
 
 
@@ -642,16 +661,10 @@ button, input { font-family: inherit; }
   opacity: 0.96;
 }
 
-.admin-slots-board.is-touch-dragging .admin-drop-zone {
-  height: 22px;
-  border-color: rgba(155, 170, 154, 0.55);
-  background: rgba(155, 170, 154, 0.12);
+.admin-slots-board.is-reorder-enabled .admin-schedule-row {
+  cursor: grab;
 }
 
-.admin-slots-board.is-touch-dragging .admin-drop-zone span {
-  opacity: 0.9;
-  transform: translateY(0);
-}
 .admin-schedule-row.dragging {
   opacity: 0.45;
 }
@@ -666,14 +679,14 @@ button, input { font-family: inherit; }
   .admin-schedule-row {
     grid-template-columns: 62px 1fr auto;
     grid-template-areas:
-      "time group drag"
+      "time group handle"
       "time done done";
     align-items: start;
   }
 
   .admin-schedule-time { grid-area: time; }
   .admin-schedule-group { grid-area: group; }
-  .admin-schedule-drag { grid-area: drag; }
+  .admin-drag-handle { grid-area: handle; justify-self: end; }
   .admin-done-btn {
     grid-area: done;
     justify-self: end;

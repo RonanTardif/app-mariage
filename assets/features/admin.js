@@ -1,7 +1,7 @@
 import { loadJSONFromStorage, saveJSONToStorage } from "../storage.js";
 import { escapeHTML } from "../ui.js";
 
-const ADMIN_STATE_KEY = "mariage_admin_state_v5";
+const ADMIN_STATE_KEY = "mariage_admin_state_v6";
 
 const DEFAULT_STATE = {
   delayMinutes: 8,
@@ -80,7 +80,7 @@ function renderSchedule(state) {
     <div class="admin-drop-zone" data-insert-index="${index}">
       <span>Déposer ici</span>
     </div>
-    <div class="admin-schedule-row ${group.done ? "is-done" : ""}" draggable="true" data-row-index="${index}">
+    <div class="admin-schedule-row ${group.done ? "is-done" : ""}" data-row-index="${index}">
       <span class="admin-schedule-time">${escapeHTML(getPassageTime(state, index))}</span>
       <span class="admin-schedule-group">${escapeHTML(group.name)}</span>
       <button
@@ -91,7 +91,14 @@ function renderSchedule(state) {
       >
         ${group.done ? "✅ Done" : "Done"}
       </button>
-      <span class="admin-schedule-drag" aria-hidden="true">☰</span>
+      <button
+        type="button"
+        class="admin-drag-handle"
+        draggable="true"
+        data-drag-index="${index}"
+        aria-label="Réordonner ce groupe"
+        title="Réordonner"
+      >☰</button>
     </div>
   `);
 
@@ -102,8 +109,6 @@ function renderSchedule(state) {
   `);
 
   board.innerHTML = rows.join("");
-
-  // Defensive cleanup: if an old cached template injects arrow controls, remove them.
   board.querySelectorAll(".admin-row-controls, .admin-move-btn").forEach((node) => node.remove());
 }
 
@@ -137,77 +142,76 @@ function wireDoneButtons(state, onChange) {
   });
 }
 
+function clearZones(board) {
+  board.querySelectorAll(".admin-drop-zone").forEach((zone) => zone.classList.remove("is-active"));
+}
 
-function wireDragAndDrop(state, onChange) {
+function wireDesktopDragAndDrop(state, onChange, canReorder) {
+  const board = document.getElementById("slotsBoard");
+  if (!board) return;
+
   let draggedIndex = null;
 
-  const clearZones = () => {
-    document.querySelectorAll(".admin-drop-zone").forEach((zone) => {
-      zone.classList.remove("is-active");
-    });
-  };
-
-  document.querySelectorAll(".admin-schedule-row").forEach((row) => {
-    row.addEventListener("dragstart", (event) => {
-      draggedIndex = Number(row.dataset.rowIndex);
+  board.querySelectorAll(".admin-drag-handle").forEach((handle) => {
+    handle.addEventListener("dragstart", (event) => {
+      if (!canReorder()) {
+        event.preventDefault();
+        return;
+      }
+      draggedIndex = Number(handle.dataset.dragIndex);
       event.dataTransfer?.setData("text/plain", "dragging");
       if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
-      row.classList.add("dragging");
-      document.getElementById("slotsBoard")?.classList.add("is-dragging");
+      board.classList.add("is-dragging");
+      handle.closest(".admin-schedule-row")?.classList.add("dragging");
     });
 
-    row.addEventListener("dragend", () => {
+    handle.addEventListener("dragend", () => {
       draggedIndex = null;
-      row.classList.remove("dragging");
-      document.getElementById("slotsBoard")?.classList.remove("is-dragging");
-      clearZones();
+      board.classList.remove("is-dragging");
+      board.querySelectorAll(".admin-schedule-row").forEach((row) => row.classList.remove("dragging"));
+      clearZones(board);
     });
   });
 
-  document.querySelectorAll(".admin-drop-zone").forEach((zone) => {
+  board.querySelectorAll(".admin-drop-zone").forEach((zone) => {
     zone.addEventListener("dragover", (event) => {
+      if (!canReorder()) return;
       event.preventDefault();
       if (draggedIndex == null) return;
-      clearZones();
+      clearZones(board);
       zone.classList.add("is-active");
     });
 
     zone.addEventListener("drop", (event) => {
+      if (!canReorder()) return;
       event.preventDefault();
       if (draggedIndex == null) return;
       const insertIndex = Number(zone.dataset.insertIndex);
       moveRow(state, draggedIndex, insertIndex);
-      clearZones();
+      clearZones(board);
       onChange();
     });
   });
 }
 
+function wireTouchDragAndDrop(state, onChange, canReorder) {
+  const board = document.getElementById("slotsBoard");
+  if (!board) return;
 
-function wireTouchDragAndDrop(state, onChange) {
   let draggedIndex = null;
   let activeZone = null;
   let activeRow = null;
   let startY = 0;
   let hasMoved = false;
 
-  const board = document.getElementById("slotsBoard");
-  if (!board) return;
-
-  const clearZones = () => {
-    document.querySelectorAll(".admin-drop-zone").forEach((zone) => {
-      zone.classList.remove("is-active");
-    });
-    activeZone = null;
-  };
-
   const cleanup = () => {
-    clearZones();
+    clearZones(board);
     board.classList.remove("is-touch-dragging");
     if (activeRow) {
       activeRow.classList.remove("touch-dragging");
       activeRow.style.transform = "";
     }
+    activeZone = null;
     activeRow = null;
     draggedIndex = null;
     hasMoved = false;
@@ -218,24 +222,28 @@ function wireTouchDragAndDrop(state, onChange) {
     return candidates.find((node) => node.classList?.contains("admin-drop-zone")) || null;
   };
 
-  document.querySelectorAll(".admin-schedule-row").forEach((row) => {
-    row.addEventListener("touchstart", (event) => {
+  board.querySelectorAll(".admin-drag-handle").forEach((handle) => {
+    handle.addEventListener("touchstart", (event) => {
+      if (!canReorder()) return;
       if (event.touches.length !== 1) return;
-      if (event.target.closest(".admin-done-btn")) return;
 
-      draggedIndex = Number(row.dataset.rowIndex);
+      draggedIndex = Number(handle.dataset.dragIndex);
       if (!Number.isInteger(draggedIndex)) return;
 
-      activeRow = row;
+      activeRow = handle.closest(".admin-schedule-row");
+      if (!activeRow) return;
+
       startY = event.touches[0].clientY;
       hasMoved = false;
       board.classList.add("is-touch-dragging");
-      row.classList.add("touch-dragging");
+      activeRow.classList.add("touch-dragging");
     }, { passive: true });
 
-    row.addEventListener("touchmove", (event) => {
+    handle.addEventListener("touchmove", (event) => {
+      if (!canReorder()) return;
       if (!activeRow || draggedIndex == null || event.touches.length !== 1) return;
       event.preventDefault();
+
       const touch = event.touches[0];
       const deltaY = touch.clientY - startY;
       if (Math.abs(deltaY) > 3) hasMoved = true;
@@ -244,14 +252,15 @@ function wireTouchDragAndDrop(state, onChange) {
       const zone = zoneAtPoint(touch.clientX, touch.clientY);
       if (zone === activeZone) return;
 
-      clearZones();
+      clearZones(board);
       if (zone) {
         zone.classList.add("is-active");
         activeZone = zone;
       }
     }, { passive: false });
 
-    row.addEventListener("touchend", () => {
+    handle.addEventListener("touchend", () => {
+      if (!canReorder()) return;
       if (!activeRow || draggedIndex == null) return;
 
       if (hasMoved && activeZone) {
@@ -265,7 +274,7 @@ function wireTouchDragAndDrop(state, onChange) {
       cleanup();
     }, { passive: true });
 
-    row.addEventListener("touchcancel", cleanup, { passive: true });
+    handle.addEventListener("touchcancel", cleanup, { passive: true });
   });
 }
 
@@ -295,8 +304,19 @@ export function initAdmin() {
   const groupIntervalInput = document.getElementById("groupIntervalInput");
   const saveBtn = document.getElementById("saveSettingsBtn");
   const resetBtn = document.getElementById("resetSettingsBtn");
+  const reorderBtn = document.getElementById("toggleReorderBtn");
+  const board = document.getElementById("slotsBoard");
 
-  if (!delayInput || !photoStartInput || !groupIntervalInput || !saveBtn || !resetBtn) return;
+  if (!delayInput || !photoStartInput || !groupIntervalInput || !saveBtn || !resetBtn || !reorderBtn || !board) return;
+
+  let reorderMode = false;
+  const canReorder = () => reorderMode;
+
+  const applyReorderMode = () => {
+    board.classList.toggle("is-reorder-enabled", reorderMode);
+    reorderBtn.textContent = reorderMode ? "Terminer la réorganisation" : "Réorganiser les groupes";
+    setStatus(reorderMode ? "Mode réorganisation activé." : "Mode consultation activé.");
+  };
 
   delayInput.value = String(state.delayMinutes);
   photoStartInput.value = state.photoStart;
@@ -306,11 +326,17 @@ export function initAdmin() {
     renderSchedule(state);
     setState(state);
     wireDoneButtons(state, refreshBoard);
-    wireDragAndDrop(state, refreshBoard);
-    wireTouchDragAndDrop(state, refreshBoard);
+    wireDesktopDragAndDrop(state, refreshBoard, canReorder);
+    wireTouchDragAndDrop(state, refreshBoard, canReorder);
+    applyReorderMode();
   };
 
   refreshBoard();
+
+  reorderBtn.addEventListener("click", () => {
+    reorderMode = !reorderMode;
+    applyReorderMode();
+  });
 
   saveBtn.addEventListener("click", () => {
     state.photoStart = photoStartInput.value || DEFAULT_STATE.photoStart;
