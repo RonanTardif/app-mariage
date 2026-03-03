@@ -175,6 +175,9 @@ function wireDesktopDragAndDrop(state, onChange) {
     });
   });
 
+  if (board.dataset.desktopDndWired === "1") return;
+  board.dataset.desktopDndWired = "1";
+
   board.addEventListener("dragover", (event) => {
     if (!Number.isInteger(draggedIndex)) return;
     event.preventDefault();
@@ -193,7 +196,8 @@ function wireDesktopDragAndDrop(state, onChange) {
 
 function wireTouchLongPressReorder(state, onChange) {
   const board = document.getElementById("slotsBoard");
-  if (!board) return;
+  if (!board || board.dataset.touchDndWired === "1") return;
+  board.dataset.touchDndWired = "1";
 
   let pressedRow = null;
   let activeRow = null;
@@ -327,7 +331,8 @@ function setStatus(message, tone = "") {
 }
 
 function parseRemoteState(payload) {
-  if (!payload || typeof payload !== "object") return null;
+  if (!payload || typeof payload !== "object") throw new Error("Réponse invalide");
+  if (typeof payload.error === "string" && payload.error.trim()) throw new Error(payload.error);
   if (payload.state && typeof payload.state === "object") return payload.state;
   if (payload.data && typeof payload.data === "object") return payload.data;
   return payload;
@@ -345,7 +350,7 @@ function createSyncUrl(state) {
 
 async function syncStateToRemote(state) {
   const response = await fetchJSONP(createSyncUrl(state), { timeoutMs: 10000 });
-  return response;
+  parseRemoteState(response);
 }
 
 export async function initAdmin() {
@@ -361,6 +366,52 @@ export async function initAdmin() {
 
   let syncTimer = null;
   let syncRequestInFlight = null;
+
+  const renderInputs = () => {
+    delayInput.value = String(state.delayMinutes);
+    photoStartInput.value = state.photoStart;
+    groupIntervalInput.value = String(state.groupIntervalMinutes);
+  };
+
+  const applyFormToState = () => {
+    state.photoStart = photoStartInput.value || DEFAULT_STATE.photoStart;
+    state.groupIntervalMinutes = Math.max(1, Number(groupIntervalInput.value) || 1);
+    state.delayMinutes = Math.max(0, Number(delayInput.value) || 0);
+  };
+
+  const flushSync = async () => {
+    if (syncRequestInFlight) return syncRequestInFlight;
+
+    setStatus("Synchronisation Google Sheet en cours…");
+    syncRequestInFlight = syncStateToRemote(state)
+      .then(() => {
+        setStatus("Google Sheet synchronisé en temps réel.", "ok");
+      })
+      .catch((error) => {
+        const details = String(error?.message || "");
+        const appScriptHint = details.includes("Unknown path")
+          ? " Apps Script à mettre à jour (path=admin/action=get|upsert)."
+          : "";
+        setStatus(`Échec de sync Google Sheet (données conservées localement).${appScriptHint}`);
+      })
+      .finally(() => {
+        syncRequestInFlight = null;
+      });
+
+    return syncRequestInFlight;
+  };
+
+  const queueSync = (pendingMessage = "Changements détectés. Synchronisation…", { immediate = false } = {}) => {
+    setStatus(pendingMessage);
+    window.clearTimeout(syncTimer);
+    if (immediate) {
+      flushSync();
+      return;
+    }
+    syncTimer = window.setTimeout(() => {
+      flushSync();
+    }, SYNC_DEBOUNCE_MS);
+  };
 
   const refreshBoard = () => {
     renderSchedule(state);
@@ -379,38 +430,6 @@ export async function initAdmin() {
     });
   };
 
-  const renderInputs = () => {
-    delayInput.value = String(state.delayMinutes);
-    photoStartInput.value = state.photoStart;
-    groupIntervalInput.value = String(state.groupIntervalMinutes);
-  };
-
-  const flushSync = async () => {
-    if (syncRequestInFlight) return syncRequestInFlight;
-
-    setStatus("Synchronisation Google Sheet en cours…");
-    syncRequestInFlight = syncStateToRemote(state)
-      .then(() => {
-        setStatus("Google Sheet synchronisé en temps réel.", "ok");
-      })
-      .catch(() => {
-        setStatus("Échec de sync Google Sheet (données conservées localement).", "");
-      })
-      .finally(() => {
-        syncRequestInFlight = null;
-      });
-
-    return syncRequestInFlight;
-  };
-
-  const queueSync = (pendingMessage = "Changements détectés. Synchronisation…") => {
-    setStatus(pendingMessage);
-    window.clearTimeout(syncTimer);
-    syncTimer = window.setTimeout(() => {
-      flushSync();
-    }, SYNC_DEBOUNCE_MS);
-  };
-
   refreshBoard();
   renderInputs();
 
@@ -424,16 +443,28 @@ export async function initAdmin() {
     renderInputs();
     refreshBoard();
     setStatus("Configuration chargée depuis Google Sheet.", "ok");
-  } catch {
-    setStatus("Google Sheet indisponible, mode local actif.");
+  } catch (error) {
+    const details = String(error?.message || "");
+    const appScriptHint = details.includes("Unknown path")
+      ? " Apps Script à mettre à jour (path=admin/action=get|upsert)."
+      : "";
+    setStatus(`Google Sheet indisponible, mode local actif.${appScriptHint}`);
   }
 
-  saveBtn.addEventListener("click", () => {
-    state.photoStart = photoStartInput.value || DEFAULT_STATE.photoStart;
-    state.groupIntervalMinutes = Math.max(1, Number(groupIntervalInput.value) || 1);
-    state.delayMinutes = Math.max(0, Number(delayInput.value) || 0);
+  const onInputRealtime = () => {
+    applyFormToState();
     refreshBoard();
-    queueSync("Modifications appliquées. Synchronisation Google Sheet…");
+    queueSync("Paramètres modifiés. Synchronisation Google Sheet…");
+  };
+
+  delayInput.addEventListener("change", onInputRealtime);
+  photoStartInput.addEventListener("change", onInputRealtime);
+  groupIntervalInput.addEventListener("change", onInputRealtime);
+
+  saveBtn.addEventListener("click", () => {
+    applyFormToState();
+    refreshBoard();
+    queueSync("Modifications appliquées. Synchronisation Google Sheet immédiate…", { immediate: true });
   });
 
   resetBtn.addEventListener("click", () => {
@@ -444,6 +475,6 @@ export async function initAdmin() {
     state.groups = reset.groups;
     renderInputs();
     refreshBoard();
-    queueSync("Données réinitialisées. Synchronisation Google Sheet…");
+    queueSync("Données réinitialisées. Synchronisation Google Sheet…", { immediate: true });
   });
 }
