@@ -659,3 +659,10 @@ button, input { font-family: inherit; }
     margin-top: 4px;
   }
 }
+
+
+/* Legacy fallback: hide old arrow-based controls if they are still present from stale cache */
+.admin-row-controls,
+.admin-move-btn {
+  display: none !important;
+}

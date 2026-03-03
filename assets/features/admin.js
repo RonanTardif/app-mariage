@@ -102,6 +102,9 @@ function renderSchedule(state) {
   `);
 
   board.innerHTML = rows.join("");
+
+  // Defensive cleanup: if an old cached template injects arrow controls, remove them.
+  board.querySelectorAll(".admin-row-controls, .admin-move-btn").forEach((node) => node.remove());
 }
 
 function moveRow(state, fromIndex, insertIndex) {
