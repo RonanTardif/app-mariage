@@ -1,21 +1,21 @@
 import { loadJSONFromStorage, saveJSONToStorage } from "../storage.js";
 import { escapeHTML } from "../ui.js";
 
-const ADMIN_STATE_KEY = "mariage_admin_state_v2";
+const ADMIN_STATE_KEY = "mariage_admin_state_v3";
 
 const DEFAULT_STATE = {
   delayMinutes: 8,
   photoStart: "2026-06-20T16:00",
   groupIntervalMinutes: 12,
   groups: [
-    "Famille mariée",
-    "Témoins",
-    "Famille mariée + marié",
-    "Fratrie",
-    "Famille mariée + mariée",
-    "Amis proches",
-    "Cousins",
-    "Collègues",
+    { name: "Famille mariée", done: false },
+    { name: "Témoins", done: false },
+    { name: "Famille mariée + marié", done: false },
+    { name: "Fratrie", done: false },
+    { name: "Famille mariée + mariée", done: false },
+    { name: "Amis proches", done: false },
+    { name: "Cousins", done: false },
+    { name: "Collègues", done: false },
   ],
 };
 
@@ -23,8 +23,32 @@ function cloneDefaultState() {
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
 }
 
+function normalizeState(raw) {
+  const fallback = cloneDefaultState();
+  if (!raw || typeof raw !== "object") return fallback;
+
+  const normalizedGroups = Array.isArray(raw.groups)
+    ? raw.groups
+        .map((group) => {
+          if (typeof group === "string") return { name: group, done: false };
+          if (group && typeof group.name === "string") {
+            return { name: group.name, done: Boolean(group.done) };
+          }
+          return null;
+        })
+        .filter(Boolean)
+    : fallback.groups;
+
+  return {
+    delayMinutes: Math.max(0, Number(raw.delayMinutes) || fallback.delayMinutes),
+    photoStart: typeof raw.photoStart === "string" ? raw.photoStart : fallback.photoStart,
+    groupIntervalMinutes: Math.max(1, Number(raw.groupIntervalMinutes) || fallback.groupIntervalMinutes),
+    groups: normalizedGroups.length > 0 ? normalizedGroups : fallback.groups,
+  };
+}
+
 function getState() {
-  return loadJSONFromStorage(ADMIN_STATE_KEY, cloneDefaultState());
+  return normalizeState(loadJSONFromStorage(ADMIN_STATE_KEY, cloneDefaultState()));
 }
 
 function setState(next) {
@@ -55,16 +79,22 @@ function renderSchedule(state) {
   board.innerHTML = state.groups
     .map(
       (group, index) => `
-        <button
-          type="button"
-          class="admin-schedule-row"
+        <div
+          class="admin-schedule-row ${group.done ? "is-done" : ""}"
           draggable="true"
           data-row-index="${index}"
         >
           <span class="admin-schedule-time">${escapeHTML(getPassageTime(state, index))}</span>
-          <span class="admin-schedule-group">${escapeHTML(group)}</span>
+          <span class="admin-schedule-group">${escapeHTML(group.name)}</span>
+          <button
+            type="button"
+            class="admin-done-btn ${group.done ? "is-done" : ""}"
+            data-done-index="${index}"
+          >
+            ${group.done ? "Done ✓" : "Done"}
+          </button>
           <span class="admin-schedule-drag">☰</span>
-        </button>
+        </div>
       `,
     )
     .join("");
@@ -79,6 +109,19 @@ function moveRow(state, fromIndex, toIndex) {
 
   const [moved] = state.groups.splice(start, 1);
   state.groups.splice(end, 0, moved);
+}
+
+function wireDoneButtons(state, onChange) {
+  document.querySelectorAll("[data-done-index]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const idx = Number(button.dataset.doneIndex);
+      if (!Number.isInteger(idx) || idx < 0 || idx >= state.groups.length) return;
+      state.groups[idx].done = !state.groups[idx].done;
+      onChange();
+    });
+  });
 }
 
 function wireDragAndDrop(state, onChange) {
@@ -127,7 +170,7 @@ function simulateSheetSync(state) {
   setStatus("Synchronisation Google Sheet simulée en cours…");
   window.setTimeout(() => {
     setStatus(
-      `Google Sheet simulé mis à jour · retard ${state.delayMinutes} min · intervalle ${state.groupIntervalMinutes} min · début photos ${state.photoStart}`,
+      `Google Sheet simulé mis à jour · début ${state.photoStart} · intervalle ${state.groupIntervalMinutes} min · retard ${state.delayMinutes} min`,
       "ok",
     );
   }, 500);
@@ -151,15 +194,16 @@ export function initAdmin() {
   const refreshBoard = () => {
     renderSchedule(state);
     setState(state);
+    wireDoneButtons(state, refreshBoard);
     wireDragAndDrop(state, refreshBoard);
   };
 
   refreshBoard();
 
   saveBtn.addEventListener("click", () => {
-    state.delayMinutes = Math.max(0, Number(delayInput.value) || 0);
     state.photoStart = photoStartInput.value || DEFAULT_STATE.photoStart;
     state.groupIntervalMinutes = Math.max(1, Number(groupIntervalInput.value) || 1);
+    state.delayMinutes = Math.max(0, Number(delayInput.value) || 0);
     setState(state);
     refreshBoard();
     simulateSheetSync(state);

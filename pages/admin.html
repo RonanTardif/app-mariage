@@ -7,11 +7,6 @@
 
     <div class="grid two">
       <label class="admin-field">
-        <span class="small"><b>Retard global (minutes)</b></span>
-        <input id="delayInput" type="number" min="0" max="180" step="1" />
-      </label>
-
-      <label class="admin-field">
         <span class="small"><b>Début des photos</b></span>
         <input id="photoStartInput" type="datetime-local" />
       </label>
@@ -19,6 +14,11 @@
       <label class="admin-field">
         <span class="small"><b>Temps entre 2 groupes (minutes)</b></span>
         <input id="groupIntervalInput" type="number" min="1" max="60" step="1" />
+      </label>
+
+      <label class="admin-field">
+        <span class="small"><b>Retard global (minutes)</b></span>
+        <input id="delayInput" type="number" min="0" max="180" step="1" />
       </label>
     </div>
 
@@ -47,7 +47,7 @@
 <div class="card">
   <div class="card-inner">
     <h3 class="card-title">Planning photos (une ligne par groupe)</h3>
-    <p class="card-subtitle">Glisse une ligne pour réordonner. L'heure est recalculée automatiquement.</p>
+    <p class="card-subtitle">Glisse une ligne pour réordonner, puis clique sur Done quand le groupe est passé.</p>
 
     <div id="slotsBoard" class="admin-slots-board" style="margin-top:12px;"></div>
   </div>

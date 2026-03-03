@@ -561,7 +561,7 @@ button, input { font-family: inherit; }
   background: rgba(255, 255, 255, 0.92);
   padding: 10px 12px;
   display: grid;
-  grid-template-columns: 72px 1fr auto;
+  grid-template-columns: 72px 1fr auto auto;
   align-items: center;
   gap: 10px;
   cursor: grab;
@@ -576,6 +576,24 @@ button, input { font-family: inherit; }
   font-weight: 700;
 }
 
+
+.admin-schedule-row.is-done {
+  background: rgba(155, 170, 154, 0.18);
+}
+
+.admin-done-btn {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-done-btn.is-done {
+  background: rgba(155, 170, 154, 0.35);
+  border-color: rgba(155, 170, 154, 0.7);
+}
 .admin-schedule-drag {
   color: rgba(28, 28, 28, 0.55);
   font-size: 18px;
