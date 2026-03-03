@@ -1,0 +1,49 @@
+<div class="card">
+  <div class="card-inner">
+    <h2 class="card-title">Console orga (prototype)</h2>
+    <p class="card-subtitle">Page cachée (accès direct). Réglages dynamiques simulés avec données synthétiques.</p>
+
+    <div class="hr"></div>
+
+    <div class="grid two">
+      <label class="admin-field">
+        <span class="small"><b>Retard global (minutes)</b></span>
+        <input id="delayInput" type="number" min="0" max="180" step="1" />
+      </label>
+
+      <label class="admin-field">
+        <span class="small"><b>Début des photos</b></span>
+        <input id="photoStartInput" type="datetime-local" />
+      </label>
+    </div>
+
+    <div class="grid two" style="margin-top:12px;">
+      <button id="saveSettingsBtn" class="btn" type="button">
+        <div class="icon sage">💾</div>
+        <div class="btn-text">
+          <div class="btn-title">Enregistrer</div>
+          <div class="btn-desc">Simule la MAJ Google Sheet</div>
+        </div>
+      </button>
+
+      <button id="resetSettingsBtn" class="btn" type="button">
+        <div class="icon gray">↩️</div>
+        <div class="btn-text">
+          <div class="btn-title">Reset démo</div>
+          <div class="btn-desc">Revenir aux données synthétiques</div>
+        </div>
+      </button>
+    </div>
+
+    <p id="adminSyncStatus" class="small" style="margin-top:12px;">Aucune synchronisation en cours.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-inner">
+    <h3 class="card-title">Slots photos (drag & drop)</h3>
+    <p class="card-subtitle">Glisse un groupe d'un créneau à un autre pour simuler la réaffectation.</p>
+
+    <div id="slotsBoard" class="admin-slots-board" style="margin-top:12px;"></div>
+  </div>
+</div>

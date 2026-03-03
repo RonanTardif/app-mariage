@@ -535,3 +535,59 @@ button, input { font-family: inherit; }
   .programme-hero-time { font-size: 20px; }
   .programme-hero-title { font-size: 16px; }
 }
+
+.admin-field {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-field input {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.92);
+}
+
+.admin-slots-board {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-slot {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.88);
+  padding: 10px;
+}
+
+.admin-slot-title {
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.admin-groups {
+  min-height: 44px;
+  display: grid;
+  gap: 8px;
+}
+
+.admin-group-item {
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(232, 191, 199, 0.22);
+  padding: 9px 10px;
+  font-weight: 700;
+  cursor: grab;
+}
+
+.admin-group-item.dragging {
+  opacity: 0.45;
+}
+
+.admin-groups.is-drop-target {
+  outline: 2px dashed rgba(155, 170, 154, 0.8);
+  outline-offset: 4px;
+  border-radius: 10px;
+}
