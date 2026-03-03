@@ -14,10 +14,10 @@ export const PHOTOS_REFRESH_MS = 15000;
 export const QUIZ_STORAGE_KEY = "mariage_quiz_scores_v1";
 
 export const ROOMS_API =
-  "https://script.google.com/macros/s/AKfycbyM1MuhsHRYLwryqZG7kaAKzCCJ55Vc5m54g3VhzCewNqCuvjavtMAaEEajLaSgI8QqsA/exec?path=rooms";
+  "https://script.google.com/macros/s/AKfycbwT2pEYbSZMCXS2JAa_gDjyj52r3iQxE_pQKQSkybEw3CXhjFIfDkrik_rsI2f-WTWamQ/exec?path=rooms";
 
 export const PHOTOS_API =
-  "https://script.google.com/macros/s/AKfycbyM1MuhsHRYLwryqZG7kaAKzCCJ55Vc5m54g3VhzCewNqCuvjavtMAaEEajLaSgI8QqsA/exec?path=data";
+  "https://script.google.com/macros/s/AKfycbwT2pEYbSZMCXS2JAa_gDjyj52r3iQxE_pQKQSkybEw3CXhjFIfDkrik_rsI2f-WTWamQ/exec?path=data";
 
 export const ADMIN_API =
-  "https://script.google.com/macros/s/AKfycbyM1MuhsHRYLwryqZG7kaAKzCCJ55Vc5m54g3VhzCewNqCuvjavtMAaEEajLaSgI8QqsA/exec?path=admin";
+  "https://script.google.com/macros/s/AKfycbwT2pEYbSZMCXS2JAa_gDjyj52r3iQxE_pQKQSkybEw3CXhjFIfDkrik_rsI2f-WTWamQ/exec?path=admin";
