@@ -11,7 +11,7 @@ function sortScores(scores) {
     .slice(0, 10);
 }
 
-export function initLeaderboard({ storageKey, loadScores, saveScores }) {
+export function initLeaderboard({ fetchScores, resetScores }) {
   const body = document.getElementById("lbBody");
   const timeEl = document.getElementById("lbTime");
   const resetBtn = document.getElementById("resetScores");
@@ -22,10 +22,21 @@ export function initLeaderboard({ storageKey, loadScores, saveScores }) {
     timeEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
   }
 
-  function render() {
+  async function render() {
     setTime();
 
-    const scores = loadScores();
+    let scores = [];
+    try {
+      scores = await fetchScores();
+    } catch (_error) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="4">Impossible de charger le leaderboard pour le moment.</td>
+        </tr>
+      `;
+      return;
+    }
+
     const sorted = sortScores(scores);
 
     body.innerHTML = sorted
@@ -50,16 +61,19 @@ export function initLeaderboard({ storageKey, loadScores, saveScores }) {
   }
 
   render();
-  const interval = setInterval(render, 3000);
+  const interval = setInterval(() => {
+    render();
+  }, 5000);
 
   window.addEventListener("hashchange", () => clearInterval(interval), { once: true });
-  window.addEventListener("storage", (e) => {
-    if (e.key === storageKey) render();
-  });
-
   if (resetBtn) {
-    resetBtn.addEventListener("click", () => {
-      saveScores([]);
+    resetBtn.addEventListener("click", async () => {
+      resetBtn.disabled = true;
+      try {
+        await resetScores();
+      } finally {
+        resetBtn.disabled = false;
+      }
       render();
     });
   }

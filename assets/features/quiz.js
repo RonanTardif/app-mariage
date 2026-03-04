@@ -14,7 +14,7 @@ function getRemark(score, total) {
   return "Es-tu sûr de bien connaître les mariés ? On t'aime quand même ❤️";
 }
 
-export async function initQuiz({ loadScores, saveScores }) {
+export async function initQuiz({ saveScore }) {
   const quiz = await fetchJSON("./data/quiz.json");
   const container = document.getElementById("quizContainer");
   const out = document.getElementById("quizResult");
@@ -73,7 +73,7 @@ export async function initQuiz({ loadScores, saveScores }) {
 
     nameInput.focus();
 
-    submit.addEventListener("click", () => {
+    submit.addEventListener("click", async () => {
       const player = (nameInput.value || "").trim();
       if (!player) {
         out.innerHTML = `
@@ -90,17 +90,31 @@ export async function initQuiz({ loadScores, saveScores }) {
 
       const now = new Date();
       const ts = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-
-      const scores = loadScores();
-      scores.push({
+      const scoreEntry = {
         player,
         score: finalScore,
         total,
         answered: finalAnswered,
         time: ts,
         created_at: now.toISOString(),
-      });
-      saveScores(scores);
+      };
+
+      submit.disabled = true;
+
+      try {
+        await saveScore(scoreEntry);
+      } catch (error) {
+        out.innerHTML = `
+          <div class="card" style="box-shadow:none;">
+            <div class="card-inner">
+              <h3 class="card-title">Envoi impossible</h3>
+              <p class="card-subtitle">Ton score n'a pas pu être enregistré pour le moment.</p>
+            </div>
+          </div>
+        `;
+        submit.disabled = false;
+        return;
+      }
 
       out.innerHTML = `
         <div class="card flash" style="box-shadow:none;">
@@ -110,8 +124,6 @@ export async function initQuiz({ loadScores, saveScores }) {
           </div>
         </div>
       `;
-
-      submit.disabled = true;
     });
   }
 

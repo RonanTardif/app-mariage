@@ -7,12 +7,16 @@
  * - slots
  * - rooms
  * - admin_state (A1=json_state, A2=JSON string)
+ * - leaderboard
  *
  * Routes:
  * - ?path=data
  * - ?path=rooms
  * - ?path=admin&action=get
  * - ?path=admin&action=upsert&state=<url-encoded-json>
+ * - ?path=leaderboard&action=list
+ * - ?path=leaderboard&action=submit&score=<url-encoded-json>
+ * - ?path=leaderboard&action=reset
  */
 
 const DEFAULT_ADMIN_STATE = {
@@ -39,11 +43,106 @@ function doGet(e) {
     if (path === "data") return handleData_(e, ss);
     if (path === "rooms") return handleRooms_(e, ss);
     if (path === "admin") return handleAdmin_(e, ss);
+    if (path === "leaderboard") return handleLeaderboard_(e, ss);
 
-    return respond_(e, { error: "Unknown path. Use ?path=data|rooms|admin" });
+    return respond_(e, { error: "Unknown path. Use ?path=data|rooms|admin|leaderboard" });
   } catch (err) {
     return respond_(e, { error: String(err) });
   }
+}
+
+function handleLeaderboard_(e, ss) {
+  const action = getParam_(e, "action", "list");
+  const sh = ss.getSheetByName("leaderboard");
+  if (!sh) throw new Error("Missing sheet: leaderboard");
+
+  if (action === "list") {
+    const rows = readSheetAsObjects_(ss, "leaderboard");
+    const scores = rows
+      .map((row) => normalizeScore_(row))
+      .filter((row) => row.player)
+      .sort((a, b) => (b.score - a.score) || (new Date(b.created_at) - new Date(a.created_at)));
+
+    return respond_(e, {
+      updated_at: new Date().toISOString(),
+      scores,
+    });
+  }
+
+  if (action === "submit") {
+    const rawScore = getParam_(e, "score", "");
+    if (!rawScore) return respond_(e, { error: "Missing score" });
+
+    let parsed;
+    try {
+      parsed = JSON.parse(rawScore);
+    } catch (_error) {
+      return respond_(e, { error: "Invalid JSON in score" });
+    }
+
+    const score = normalizeScore_(parsed);
+    if (!score.player) return respond_(e, { error: "Missing player" });
+
+    ensureLeaderboardHeader_(sh);
+    sh.appendRow([
+      score.player,
+      score.score,
+      score.total,
+      score.answered,
+      score.time,
+      score.created_at,
+    ]);
+
+    return respond_(e, {
+      ok: true,
+      updated_at: new Date().toISOString(),
+      score,
+    });
+  }
+
+  if (action === "reset") {
+    ensureLeaderboardHeader_(sh);
+    const lastRow = sh.getLastRow();
+    if (lastRow > 1) {
+      sh.getRange(2, 1, lastRow - 1, 6).clearContent();
+    }
+
+    return respond_(e, {
+      ok: true,
+      updated_at: new Date().toISOString(),
+      scores: [],
+    });
+  }
+
+  return respond_(e, { error: "Unknown action for path=leaderboard. Use list|submit|reset" });
+}
+
+function ensureLeaderboardHeader_(sheet) {
+  const headers = ["player", "score", "total", "answered", "time", "created_at"];
+  const current = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
+  const same = headers.every((header, index) => String(current[index] || "").trim() === header);
+  if (same) return;
+
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+}
+
+function normalizeScore_(raw) {
+  const nowIso = new Date().toISOString();
+  const player = String(raw.player || "").trim().slice(0, 40);
+  const score = Number(raw.score);
+  const total = Number(raw.total);
+  const answered = Number(raw.answered);
+  const createdAt = String(raw.created_at || nowIso).trim();
+  const d = new Date(createdAt);
+
+  return {
+    player,
+    score: Number.isFinite(score) ? score : 0,
+    total: Number.isFinite(total) ? total : 0,
+    answered: Number.isFinite(answered) ? answered : 0,
+    time: String(raw.time || "").trim().slice(0, 5),
+    created_at: String(d) === "Invalid Date" ? nowIso : d.toISOString(),
+  };
 }
 
 function handleData_(e, ss) {
