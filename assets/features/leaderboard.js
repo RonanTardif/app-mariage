@@ -17,6 +17,8 @@ export function initLeaderboard({ fetchScores, resetScores }) {
   const resetBtn = document.getElementById("resetScores");
   if (!body || !timeEl) return;
 
+  let hasRenderedScores = false;
+
   function setTime() {
     const now = new Date();
     timeEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -29,6 +31,10 @@ export function initLeaderboard({ fetchScores, resetScores }) {
     try {
       scores = await fetchScores();
     } catch (_error) {
+      if (hasRenderedScores) {
+        return;
+      }
+
       body.innerHTML = `
         <tr>
           <td colspan="4">Impossible de charger le leaderboard pour le moment.</td>
@@ -51,6 +57,7 @@ export function initLeaderboard({ fetchScores, resetScores }) {
       `
       )
       .join("");
+    hasRenderedScores = true;
 
     const lastCount = Number(sessionStorage.getItem("lb_count") || "0");
     if (scores.length > lastCount) {
