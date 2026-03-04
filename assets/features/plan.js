@@ -3,7 +3,7 @@ import { fetchJSON, escapeHTML } from "../ui.js";
 const DEFAULT_MAP_BG = "./assets/plan-domaine.jpg";
 const PLACES_PATH = "./data/places.json";
 
-const MAP_SPOTS = [
+const MAP_SPOTS_OLD = [
   { id: "gites", label: "Gîtes", points: "318,188 446,172 532,229 477,295 296,274" },
   { id: "chapelle", label: "Chapelle", points: "570,88 640,75 672,126 608,155 558,128" },
   { id: "chateau", label: "Château", points: "662,140 856,140 882,236 656,244" },
@@ -11,6 +11,33 @@ const MAP_SPOTS = [
   { id: "piscine", label: "Piscine", points: "552,330 712,334 754,406 568,419 518,379" },
   { id: "orangerie", label: "Orangerie", points: "430,540 644,540 666,606 438,622" },
   { id: "vin", label: "Vin d'Honneur", points: "742,538 944,562 908,649 706,622" },
+  { id: "saloon", label: "Saloon", points: "62,596 192,554 242,654 126,694" },
+  { id: "refresh", label: "Rafraîchissement", points: "744,430 852,426 868,498 742,500" },
+  { id: "lac", label: "Lac", points: "26,98 206,84 236,264 72,278" }
+];
+
+const MAP_SPOTS = [
+  // from <title>gites</title> (path) — envelope polygon from bx:d key points
+  { id: "gites", label: "Gîtes", points: "314,324 380,253 537,253 576,283 542,367 318,353" },
+
+  // from <title>eglise</title> (rect) — mapped to your "chapelle" id
+  { id: "chapelle", label: "Chapelle", points: "571,104 663,104 663,226 571,226" },
+
+  // from <title>chateau</title> (path)
+  { id: "chateau", label: "Château", points: "684,208 879,209 887,231 887,308 676,306" },
+
+  // from <title>jardin_francais</title> (path) — points taken from bx:d sequence
+  { id: "jardin", label: "Jardin", points: "175,542 166,561 170,573 178,574 190,580 209,587 259,601 284,607 328,617 373,625 380,619 384,613 392,599 444,467 444,459 444,449 433,443 383,433 304,415 267,404 257,404 251,404 241,408 184,519" },
+
+  // from <title>piscine</title> (polygon)
+  { id: "piscine", label: "Piscine", points: "514,519 577,480 733,510 668,548" },
+
+  // keep your existing ones (unchanged)
+  { id: "orangerie", label: "Orangerie", points: "430,540 644,540 666,606 438,622" },
+
+  // from <title>vin_honneur</title> (ellipse) — 8-pt approximation
+  { id: "vin", label: "Vin d'Honneur", points: "679,384 712,352 792,339 872,352 906,384 872,416 792,429 712,416" },
+
   { id: "saloon", label: "Saloon", points: "62,596 192,554 242,654 126,694" },
   { id: "refresh", label: "Rafraîchissement", points: "744,430 852,426 868,498 742,500" },
   { id: "lac", label: "Lac", points: "26,98 206,84 236,264 72,278" }
