@@ -73,6 +73,44 @@ function renderSVG(backgroundSrc) {
   const cachedMarkup = planWarmupState.svgMarkupByBackground.get(backgroundSrc);
   if (cachedMarkup) return cachedMarkup;
 
+  const W = 1024;
+  const H = 1024;
+
+  const markup = `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="mapTitle mapDesc" preserveAspectRatio="xMidYMid meet">
+      <title id="mapTitle">Plan du domaine</title>
+      <desc id="mapDesc">Cliquez sur les zones marquées pour ouvrir le détail du lieu.</desc>
+
+      <rect x="0" y="0" width="${W}" height="${H}" fill="#f8f7f6" />
+      <image class="map-bg-image"
+        href="${escapeHTML(backgroundSrc)}"
+        x="0" y="0" width="${W}" height="${H}"
+        preserveAspectRatio="xMidYMid meet"
+      />
+
+      ${MAP_SPOTS.map(
+        (spot) => `
+          <g class="map-hotspot" data-place-id="${spot.id}" tabindex="0" role="button" aria-label="${spot.label}">
+            <polygon points="${spot.points}" class="map-zone" />
+            <text class="map-zone-label"
+              x="${spot.points.split(" ")[0].split(",")[0]}"
+              y="${Number(spot.points.split(" ")[0].split(",")[1]) - 8}">
+              ${spot.label}
+            </text>
+          </g>
+        `
+      ).join("")}
+    </svg>
+  `;
+
+  planWarmupState.svgMarkupByBackground.set(backgroundSrc, markup);
+  return markup;
+}
+
+function renderSVG_old(backgroundSrc) {
+  const cachedMarkup = planWarmupState.svgMarkupByBackground.get(backgroundSrc);
+  if (cachedMarkup) return cachedMarkup;
+
   const markup = `
     <svg viewBox="0 0 1000 720" role="img" aria-labelledby="mapTitle mapDesc">
       <title id="mapTitle">Plan du domaine</title>
