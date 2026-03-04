@@ -333,6 +333,24 @@ button, input { font-family: inherit; }
   display: block;
 }
 
+.map-svg-root {
+  line-height: 0;
+}
+
+.map-hotspot-zone {
+  cursor: pointer;
+  transition: opacity 140ms ease, filter 140ms ease;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.map-hotspot-zone:hover,
+.map-hotspot-zone:focus,
+.map-hotspot-zone.is-active {
+  opacity: 0.8;
+  filter: brightness(1.1) drop-shadow(0 0 6px rgba(0, 0, 0, 0.25));
+}
+
 .map-zone {
   fill: rgba(232, 191, 199, 0.2);
   stroke: rgba(111, 115, 119, 0.55);
