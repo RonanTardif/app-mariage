@@ -14,14 +14,14 @@ export const PHOTOS_REFRESH_MS = 15000;
 export const QUIZ_STORAGE_KEY = "mariage_quiz_scores_v1";
 
 export const ROOMS_API =
-  "https://script.google.com/macros/s/AKfycbyo7osdy50JyMjIXZTU1TnxyZO6AlvdXJEBeEon0pVAe0uI407CfeX3sBmvavRQY_TOVA/exec?path=rooms";
+  "https://script.google.com/macros/s/AKfycbxrIhZAk_gL2I3s3u_7yG_-TWf9RqA8bn6K_N5CU_MLzWCVPH_TPW70gnPpUEkNft_r/exec?path=rooms";
 
 export const PHOTOS_API =
-  "https://script.google.com/macros/s/AKfycbyo7osdy50JyMjIXZTU1TnxyZO6AlvdXJEBeEon0pVAe0uI407CfeX3sBmvavRQY_TOVA/exec?path=data";
+  "https://script.google.com/macros/s/AKfycbxrIhZAk_gL2I3s3u_7yG_-TWf9RqA8bn6K_N5CU_MLzWCVPH_TPW70gnPpUEkNft_r/exec?path=data";
 
 export const ADMIN_API =
-  "https://script.google.com/macros/s/AKfycbyo7osdy50JyMjIXZTU1TnxyZO6AlvdXJEBeEon0pVAe0uI407CfeX3sBmvavRQY_TOVA/exec?path=admin";
+  "https://script.google.com/macros/s/AKfycbxrIhZAk_gL2I3s3u_7yG_-TWf9RqA8bn6K_N5CU_MLzWCVPH_TPW70gnPpUEkNft_r/exec?path=admin";
 
 export const LEADERBOARD_API =
-  "https://script.google.com/macros/s/AKfycbyo7osdy50JyMjIXZTU1TnxyZO6AlvdXJEBeEon0pVAe0uI407CfeX3sBmvavRQY_TOVA/exec?path=leaderboard";
+  "https://script.google.com/macros/s/AKfycbxrIhZAk_gL2I3s3u_7yG_-TWf9RqA8bn6K_N5CU_MLzWCVPH_TPW70gnPpUEkNft_r/exec?path=leaderboard";
 
