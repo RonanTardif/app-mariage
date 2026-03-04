@@ -5,6 +5,11 @@ import { initChambre } from "./features/chambre.js";
 import { initPhotos } from "./features/photos.js";
 import { initQuiz } from "./features/quiz.js";
 import { initLeaderboard } from "./features/leaderboard.js";
+import {
+  fetchLeaderboardScores,
+  resetLeaderboardScores,
+  submitLeaderboardScore,
+} from "./features/leaderboard-api.js";
 import { initWhatsApp } from "./features/whatsapp.js";
 import { initAdmin } from "./features/admin.js";
 
@@ -16,6 +21,20 @@ function saveScores(scores) {
   saveJSONToStorage(QUIZ_STORAGE_KEY, scores);
 }
 
+async function saveScore(scoreEntry) {
+  const scores = loadScores();
+  scores.push(scoreEntry);
+  saveScores(scores);
+
+  try {
+    await submitLeaderboardScore(scoreEntry);
+  } catch (error) {
+    scores.pop();
+    saveScores(scores);
+    throw error;
+  }
+}
+
 export async function initPage(routePath) {
   switch (routePath) {
     case "/plan":
@@ -25,12 +44,11 @@ export async function initPage(routePath) {
     case "/photos":
       return initPhotos();
     case "/quiz":
-      return initQuiz({ loadScores, saveScores });
+      return initQuiz({ saveScore });
     case "/leaderboard":
       return initLeaderboard({
-        storageKey: QUIZ_STORAGE_KEY,
-        loadScores,
-        saveScores,
+        fetchScores: fetchLeaderboardScores,
+        resetScores: resetLeaderboardScores,
       });
     case "/whatsapp":
       return initWhatsApp();

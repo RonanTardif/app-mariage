@@ -22,4 +22,6 @@ export const PHOTOS_API =
 export const ADMIN_API =
   "https://script.google.com/macros/s/AKfycbyo7osdy50JyMjIXZTU1TnxyZO6AlvdXJEBeEon0pVAe0uI407CfeX3sBmvavRQY_TOVA/exec?path=admin";
 
+export const LEADERBOARD_API =
+  "https://script.google.com/macros/s/AKfycbyo7osdy50JyMjIXZTU1TnxyZO6AlvdXJEBeEon0pVAe0uI407CfeX3sBmvavRQY_TOVA/exec?path=leaderboard";
 
