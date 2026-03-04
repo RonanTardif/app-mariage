@@ -333,6 +333,36 @@ button, input { font-family: inherit; }
   display: block;
 }
 
+.map-svg-root {
+  line-height: 0;
+  max-width: 1024px;
+  margin: 0 auto;
+}
+
+.map-svg-root svg {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
+.map-hotspot-zone {
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.map-hotspot-zone * {
+  pointer-events: all;
+}
+
+.map-hotspot-zone:focus {
+  outline: 2px solid rgba(28, 28, 28, 0.7);
+  outline-offset: 2px;
+}
+
+.map-hotspot-zone.is-active {
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.28));
+}
+
 .map-zone {
   fill: rgba(232, 191, 199, 0.2);
   stroke: rgba(111, 115, 119, 0.55);

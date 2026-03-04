@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 720">
+  <title>Plan du domaine</title>
+  <desc>Zones interactives du domaine.</desc>
+  <image href="./plan-domaine.jpg" x="0" y="0" width="1000" height="720" preserveAspectRatio="xMidYMid slice"/>
+
+  <polygon id="gites" points="318,188 446,172 532,229 477,295 296,274" fill="rgba(232,191,199,0.28)" stroke="rgba(111,115,119,0.55)" stroke-width="2"/>
+  <polygon id="chateau" points="662,140 856,140 882,236 656,244" fill="rgba(232,191,199,0.28)" stroke="rgba(111,115,119,0.55)" stroke-width="2"/>
+  <polygon id="jardin_francais" points="214,322 368,322 410,505 256,535 166,456" fill="rgba(232,191,199,0.28)" stroke="rgba(111,115,119,0.55)" stroke-width="2"/>
+  <polygon id="vin_honneur" points="742,538 944,562 908,649 706,622" fill="rgba(232,191,199,0.28)" stroke="rgba(111,115,119,0.55)" stroke-width="2"/>
+  <polygon id="eglise" points="570,88 640,75 672,126 608,155 558,128" fill="rgba(232,191,199,0.28)" stroke="rgba(111,115,119,0.55)" stroke-width="2"/>
+  <polygon id="piscine" points="552,330 712,334 754,406 568,419 518,379" fill="rgba(232,191,199,0.28)" stroke="rgba(111,115,119,0.55)" stroke-width="2"/>
+</svg>
