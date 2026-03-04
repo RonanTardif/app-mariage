@@ -100,9 +100,25 @@ export async function initQuiz({ saveScore }) {
       };
 
       submit.disabled = true;
+      out.innerHTML = `
+        <div class="card flash" style="box-shadow:none;">
+          <div class="card-inner">
+            <h3 class="card-title">Résultat en cours d'envoi…</h3>
+            <p class="card-subtitle"><b>${escapeHTML(player)}</b> : ${finalScore}/${total}</p>
+          </div>
+        </div>
+      `;
 
       try {
         await saveScore(scoreEntry);
+        out.innerHTML = `
+          <div class="card flash" style="box-shadow:none;">
+            <div class="card-inner">
+              <h3 class="card-title">Résultat envoyé 🎉</h3>
+              <p class="card-subtitle"><b>${escapeHTML(player)}</b> : ${finalScore}/${total}</p>
+            </div>
+          </div>
+        `;
       } catch (error) {
         out.innerHTML = `
           <div class="card" style="box-shadow:none;">
@@ -113,17 +129,7 @@ export async function initQuiz({ saveScore }) {
           </div>
         `;
         submit.disabled = false;
-        return;
       }
-
-      out.innerHTML = `
-        <div class="card flash" style="box-shadow:none;">
-          <div class="card-inner">
-            <h3 class="card-title">Résultat envoyé 🎉</h3>
-            <p class="card-subtitle"><b>${escapeHTML(player)}</b> : ${finalScore}/${total}</p>
-          </div>
-        </div>
-      `;
     });
   }
 
