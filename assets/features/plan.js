@@ -1,25 +1,27 @@
 import { fetchJSON, escapeHTML } from "../ui.js";
 
-const DEFAULT_MAP_BG = "./assets/plan-domaine.jpg";
+const DEFAULT_MAP_SVG = "./assets/plan-domaine.svg";
 const PLACES_PATH = "./data/places.json";
 
-const MAP_SPOTS = [
-  { id: "gites", label: "Gîtes", points: "318,188 446,172 532,229 477,295 296,274" },
-  { id: "chapelle", label: "Chapelle", points: "570,88 640,75 672,126 608,155 558,128" },
-  { id: "chateau", label: "Château", points: "662,140 856,140 882,236 656,244" },
-  { id: "jardin", label: "Jardin", points: "214,322 368,322 410,505 256,535 166,456" },
-  { id: "piscine", label: "Piscine", points: "552,330 712,334 754,406 568,419 518,379" },
-  { id: "orangerie", label: "Orangerie", points: "430,540 644,540 666,606 438,622" },
-  { id: "vin", label: "Vin d'Honneur", points: "742,538 944,562 908,649 706,622" },
-  { id: "saloon", label: "Saloon", points: "62,596 192,554 242,654 126,694" },
-  { id: "refresh", label: "Rafraîchissement", points: "744,430 852,426 868,498 742,500" },
-  { id: "lac", label: "Lac", points: "26,98 206,84 236,264 72,278" }
-];
+const SVG_ZONE_TO_PLACE_ID = {
+  jardin_francais: "jardin",
+  vin_honneur: "vin",
+  eglise: "chapelle",
+};
+
+const SVG_ZONE_LABELS = {
+  gites: "Gîtes",
+  chateau: "Château",
+  jardin_francais: "Jardin français",
+  vin_honneur: "Vin d'honneur",
+  eglise: "Église",
+  piscine: "Piscine",
+};
 
 const planWarmupState = {
   placesPromise: null,
-  preloadedBackgrounds: new Set(),
-  svgMarkupByBackground: new Map(),
+  mapSvgPromiseByPath: new Map(),
+  svgMarkupByPath: new Map(),
 };
 
 function loadPlacesData() {
@@ -33,39 +35,36 @@ function loadPlacesData() {
   return planWarmupState.placesPromise;
 }
 
-function preloadBackground(backgroundSrc) {
-  if (!backgroundSrc || planWarmupState.preloadedBackgrounds.has(backgroundSrc)) return;
+function loadMapSVG(svgPath) {
+  const existingPromise = planWarmupState.mapSvgPromiseByPath.get(svgPath);
+  if (existingPromise) return existingPromise;
 
-  planWarmupState.preloadedBackgrounds.add(backgroundSrc);
-  const img = new Image();
-  img.decoding = "async";
-  img.src = backgroundSrc;
+  const svgPromise = fetch(svgPath)
+    .then((response) => {
+      if (!response.ok) throw new Error(`Échec du chargement du plan SVG (${response.status})`);
+      return response.text();
+    })
+    .catch((error) => {
+      planWarmupState.mapSvgPromiseByPath.delete(svgPath);
+      throw error;
+    });
+  planWarmupState.mapSvgPromiseByPath.set(svgPath, svgPromise);
+
+  return svgPromise;
 }
 
-function renderSVG(backgroundSrc) {
-  const cachedMarkup = planWarmupState.svgMarkupByBackground.get(backgroundSrc);
+function renderSVG(svgPath, svgMarkup) {
+  const cacheKey = `${svgPath}::${svgMarkup.length}`;
+  const cachedMarkup = planWarmupState.svgMarkupByPath.get(cacheKey);
   if (cachedMarkup) return cachedMarkup;
 
   const markup = `
-    <svg viewBox="0 0 1000 720" role="img" aria-labelledby="mapTitle mapDesc">
-      <title id="mapTitle">Plan du domaine</title>
-      <desc id="mapDesc">Cliquez sur les zones marquées pour ouvrir le détail du lieu.</desc>
-
-      <rect x="0" y="0" width="1000" height="720" fill="#f8f7f6" />
-      <image class="map-bg-image" href="${escapeHTML(backgroundSrc)}" x="0" y="0" width="1000" height="720" preserveAspectRatio="xMidYMid slice" />
-
-      ${MAP_SPOTS.map(
-        (spot) => `
-          <g class="map-hotspot" data-place-id="${spot.id}" tabindex="0" role="button" aria-label="${spot.label}">
-            <polygon points="${spot.points}" class="map-zone" />
-            <text class="map-zone-label" x="${spot.points.split(" ")[0].split(",")[0]}" y="${Number(spot.points.split(" ")[0].split(",")[1]) - 8}">${spot.label}</text>
-          </g>
-        `
-      ).join("")}
-    </svg>
+    <div class="map-svg-root" role="img" aria-label="Plan interactif du domaine">
+      ${svgMarkup}
+    </div>
   `;
 
-  planWarmupState.svgMarkupByBackground.set(backgroundSrc, markup);
+  planWarmupState.svgMarkupByPath.set(cacheKey, markup);
   return markup;
 }
 
@@ -85,9 +84,14 @@ function renderDetail(place) {
   `;
 }
 
+function getPlaceIdFromZoneId(zoneId, byId) {
+  if (!zoneId) return "";
+  if (byId.has(zoneId)) return zoneId;
+  return SVG_ZONE_TO_PLACE_ID[zoneId] || "";
+}
+
 export function warmupPlanAssets() {
-  preloadBackground(DEFAULT_MAP_BG);
-  renderSVG(DEFAULT_MAP_BG);
+  loadMapSVG(DEFAULT_MAP_SVG).catch(() => null);
   return loadPlacesData();
 }
 
@@ -100,17 +104,40 @@ export async function initPlan() {
   const shortcutsContainer = document.getElementById("placeShortcuts");
   if (!mapContainer || !detailContainer || !shortcutsContainer) return;
 
-  const backgroundSrc = mapContainer.dataset.mapImage || DEFAULT_MAP_BG;
-  preloadBackground(backgroundSrc);
-  mapContainer.innerHTML = renderSVG(backgroundSrc);
+  const mapSvgPath = mapContainer.dataset.mapSvg || DEFAULT_MAP_SVG;
 
-  const bgImage = mapContainer.querySelector(".map-bg-image");
-  if (bgImage) {
-    bgImage.addEventListener("error", () => mapContainer.classList.add("is-missing-bg"));
-    bgImage.addEventListener("load", () => mapContainer.classList.remove("is-missing-bg"));
+  let svgMarkup = "";
+  try {
+    svgMarkup = await loadMapSVG(mapSvgPath);
+  } catch (error) {
+    mapContainer.classList.add("is-missing-bg");
+    mapContainer.innerHTML = `<p class="small">Impossible de charger <code>${escapeHTML(mapSvgPath)}</code>.</p>`;
+    return;
   }
 
-  const mappedIds = new Set(MAP_SPOTS.map((spot) => spot.id));
+  mapContainer.classList.remove("is-missing-bg");
+  mapContainer.innerHTML = renderSVG(mapSvgPath, svgMarkup);
+
+  const knownZoneIds = Object.keys(SVG_ZONE_TO_PLACE_ID);
+  byId.forEach((_value, placeId) => knownZoneIds.push(placeId));
+
+  const zoneNodes = [];
+  knownZoneIds.forEach((zoneId) => {
+    const node = mapContainer.querySelector(`#${zoneId}`);
+    if (!node) return;
+    const placeId = getPlaceIdFromZoneId(zoneId, byId);
+    if (!placeId || !byId.has(placeId)) return;
+
+    node.classList.add("map-hotspot-zone");
+    node.setAttribute("data-zone-id", zoneId);
+    node.setAttribute("data-place-id", placeId);
+    node.setAttribute("tabindex", "0");
+    node.setAttribute("role", "button");
+    node.setAttribute("aria-label", SVG_ZONE_LABELS[zoneId] || byId.get(placeId)?.title || placeId);
+    zoneNodes.push(node);
+  });
+
+  const mappedIds = new Set(zoneNodes.map((node) => node.getAttribute("data-place-id")));
   const shortcuts = places.filter((p) => !mappedIds.has(p.id) && p.id === "foret");
   shortcutsContainer.innerHTML = shortcuts
     .map(
@@ -129,7 +156,7 @@ export async function initPlan() {
     selectedId = id;
     detailContainer.innerHTML = renderDetail(place);
 
-    mapContainer.querySelectorAll(".map-hotspot").forEach((el) => {
+    zoneNodes.forEach((el) => {
       const isActive = el.getAttribute("data-place-id") === id;
       el.classList.toggle("is-active", isActive);
       el.setAttribute("aria-pressed", isActive ? "true" : "false");
@@ -141,15 +168,19 @@ export async function initPlan() {
     });
   }
 
-  mapContainer.querySelectorAll(".map-hotspot").forEach((hotspot) => {
-    const choose = () => setSelected(hotspot.getAttribute("data-place-id") || "");
-    hotspot.addEventListener("click", choose);
-    hotspot.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        choose();
-      }
-    });
+  mapContainer.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target.closest("[data-place-id]") : null;
+    if (!target) return;
+    setSelected(target.getAttribute("data-place-id") || "");
+  });
+
+  mapContainer.addEventListener("keydown", (event) => {
+    const target = event.target instanceof Element ? event.target.closest("[data-place-id]") : null;
+    if (!target) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      setSelected(target.getAttribute("data-place-id") || "");
+    }
   });
 
   shortcutsContainer.querySelectorAll(".map-shortcut").forEach((shortcut) => {
@@ -158,5 +189,8 @@ export async function initPlan() {
     });
   });
 
+  if (!byId.has(selectedId) && places[0]?.id) {
+    selectedId = places[0].id;
+  }
   setSelected(selectedId);
 }
