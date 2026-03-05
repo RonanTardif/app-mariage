@@ -8,11 +8,10 @@ function isInStandaloneMode() {
 
 export function initPwaInstall() {
   const installBtn = document.getElementById("installBtn");
-  const installHelpBtn = document.getElementById("installHelpBtn");
   const iosModal = document.getElementById("iosInstallModal");
   const closeModalBtn = document.getElementById("closeIosModal");
 
-  if (!installBtn || !installHelpBtn || !iosModal || !closeModalBtn) {
+  if (!installBtn || !iosModal || !closeModalBtn) {
     return;
   }
 
@@ -28,7 +27,6 @@ export function initPwaInstall() {
 
   const hideInstallCta = () => {
     installBtn.hidden = true;
-    installHelpBtn.hidden = true;
   };
 
   closeIosModal();
@@ -39,8 +37,9 @@ export function initPwaInstall() {
   }
 
   if (isIos()) {
-    installHelpBtn.hidden = false;
-    installHelpBtn.addEventListener("click", openIosModal);
+    installBtn.hidden = false;
+    installBtn.textContent = "Installer";
+    installBtn.addEventListener("click", openIosModal);
     closeModalBtn.addEventListener("click", closeIosModal);
     iosModal.addEventListener("click", (event) => {
       if (event.target === iosModal) {
@@ -58,6 +57,7 @@ export function initPwaInstall() {
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
     deferredPrompt = event;
+    installBtn.textContent = "Installer l'app";
     installBtn.hidden = false;
   });
 
