@@ -1,0 +1,27 @@
+{
+  "name": "Mariage Ronan & Lorie",
+  "short_name": "R&L",
+  "display": "standalone",
+  "start_url": "./",
+  "scope": "./",
+  "theme_color": "#9baa9a",
+  "background_color": "#fbfaf9",
+  "icons": [
+    {
+      "src": "./assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

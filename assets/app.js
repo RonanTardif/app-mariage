@@ -3,6 +3,7 @@ import { setActiveNav, setClock } from "./ui.js";
 import { initPage } from "./inits.js";
 import { warmupAppCaches } from "./data-cache.js";
 import { warmupPlanAssets } from "./features/plan.js";
+import { initPwaInstall } from "./pwa-install.js";
 
 async function loadPage(routePath) {
   const view = document.getElementById("view");
@@ -26,6 +27,19 @@ function tickClock() {
   setInterval(setClock, 1000 * 10);
 }
 
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch((error) => {
+      console.error("SW registration failed", error);
+    });
+  });
+}
+
 function onRouteChange() {
   const routePath = getRouteFromHash();
   loadPage(routePath).catch((e) => {
@@ -47,6 +61,8 @@ function onRouteChange() {
 window.addEventListener("hashchange", onRouteChange);
 
 tickClock();
+initPwaInstall();
+registerServiceWorker();
 onRouteChange();
 Promise.allSettled([
   warmupAppCaches(),
