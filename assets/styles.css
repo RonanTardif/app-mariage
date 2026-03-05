@@ -367,15 +367,29 @@ button, input { font-family: inherit; }
   margin-top: 12px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: stretch;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
 }
 
 .map-carousel-nav {
+  width: 44px;
+  height: 44px;
   min-width: 44px;
-  padding: 0 12px;
-  font-size: 20px;
+  border-radius: 999px;
+  padding: 0;
+  border: 1px solid rgba(111, 115, 119, 0.28);
+  background: rgba(255, 255, 255, 0.92);
+  color: rgba(28, 28, 28, 0.82);
+  font-size: 22px;
   line-height: 1;
+  box-shadow: 0 8px 20px rgba(28, 28, 28, 0.08);
+}
+
+.map-carousel-nav:hover,
+.map-carousel-nav:focus-visible {
+  background: rgba(155, 170, 154, 0.2);
+  border-color: rgba(111, 115, 119, 0.45);
+  transform: translateY(-1px);
 }
 
 .map-detail {
@@ -385,22 +399,14 @@ button, input { font-family: inherit; }
 
 @media (max-width: 600px) {
   .map-carousel {
-    grid-template-columns: 1fr auto auto;
+    gap: 8px;
   }
 
-  .map-detail {
-    grid-column: 1 / -1;
-    grid-row: 1;
-  }
-
-  #placePrev {
-    grid-column: 2;
-    grid-row: 2;
-  }
-
-  #placeNext {
-    grid-column: 3;
-    grid-row: 2;
+  .map-carousel-nav {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    font-size: 20px;
   }
 }
 
@@ -412,20 +418,6 @@ button, input { font-family: inherit; }
   gap: 8px;
 }
 
-.map-shortcuts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.map-shortcut {
-  cursor: pointer;
-}
-
-.map-shortcut.is-active {
-  background: rgba(155, 170, 154, 0.35);
-}
 
 .map-bg-image {
   opacity: 0.96;

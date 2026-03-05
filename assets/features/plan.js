@@ -202,10 +202,9 @@ export async function initPlan() {
 
   const mapContainer = document.getElementById("domainMap");
   const detailContainer = document.getElementById("placeDetail");
-  const shortcutsContainer = document.getElementById("placeShortcuts");
   const prevButton = document.getElementById("placePrev");
   const nextButton = document.getElementById("placeNext");
-  if (!mapContainer || !detailContainer || !shortcutsContainer || !prevButton || !nextButton) return;
+  if (!mapContainer || !detailContainer || !prevButton || !nextButton) return;
 
   const backgroundSrc = mapContainer.dataset.mapImage || DEFAULT_MAP_BG;
   preloadBackground(backgroundSrc);
@@ -218,17 +217,7 @@ export async function initPlan() {
   }
 
   const mappedIds = new Set(MAP_SPOTS.map((spot) => spot.id));
-  const shortcuts = places.filter((p) => !mappedIds.has(p.id) && p.id === "foret");
-  shortcutsContainer.innerHTML = shortcuts
-    .map(
-      (place) =>
-        `<button class="badge map-shortcut" data-place-id="${escapeHTML(place.id)}" type="button">${escapeHTML(
-          place.title
-        )}</button>`
-    )
-    .join("");
-
-  const carouselPlaces = places.filter((p) => mappedIds.has(p.id));
+  const carouselPlaces = [...places];
   const placeIndexById = new Map(carouselPlaces.map((place, index) => [place.id, index]));
 
   let selectedId = placeIndexById.has("chateau") ? "chateau" : carouselPlaces[0]?.id || "";
@@ -248,10 +237,6 @@ export async function initPlan() {
       el.setAttribute("aria-pressed", isActive ? "true" : "false");
     });
 
-    shortcutsContainer.querySelectorAll(".map-shortcut").forEach((el) => {
-      const isActive = el.getAttribute("data-place-id") === id;
-      el.classList.toggle("is-active", isActive);
-    });
   }
 
 
@@ -272,12 +257,6 @@ export async function initPlan() {
         event.preventDefault();
         choose();
       }
-    });
-  });
-
-  shortcutsContainer.querySelectorAll(".map-shortcut").forEach((shortcut) => {
-    shortcut.addEventListener("click", () => {
-      setSelected(shortcut.getAttribute("data-place-id") || "");
     });
   });
 
