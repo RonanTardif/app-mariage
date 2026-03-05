@@ -436,6 +436,18 @@ button, input { font-family: inherit; }
   margin: 8px 0 0;
   color: rgba(28, 28, 28, 0.72);
 }
+.programme-hero-note {
+  margin: 8px 0 0;
+  color: rgba(28, 28, 28, 0.56);
+}
+.programme-hero-link {
+  margin: 8px 0 0;
+}
+.programme-hero-link a {
+  color: #b85e7f;
+  font-weight: 700;
+  text-decoration: underline;
+}
 
 .programme-day { margin-top: 16px; }
 .programme-day-title {
