@@ -724,6 +724,10 @@ button, input { font-family: inherit; }
   background: rgba(28, 28, 28, 0.45);
 }
 
+.modal[hidden] {
+  display: none;
+}
+
 .modal-card {
   width: min(480px, 100%);
   background: var(--card);
