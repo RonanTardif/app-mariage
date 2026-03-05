@@ -1,7 +1,7 @@
 const WEDDING_EVENTS = [
   {
     id: "samedi-messe",
-    date: "2026-06-13",
+    startsAt: "2026-06-13T14:30:00+02:00",
     timeLabel: "14h30 → 15h30",
     title: "Messe à la Cathédrale de Luçon",
     baseText: "Le week-end commence bientôt. Prépare ta tenue, ton sourire et ton énergie 💛",
@@ -9,7 +9,7 @@ const WEDDING_EVENTS = [
   },
   {
     id: "samedi-arrivee",
-    date: "2026-06-13",
+    startsAt: "2026-06-13T16:00:00+02:00",
     timeLabel: "16h00",
     title: "Arrivée au domaine & accueil des invités",
     baseText: "Le prochain moment du programme s'affichera ici dès qu'il sera détecté.",
@@ -17,7 +17,7 @@ const WEDDING_EVENTS = [
   },
   {
     id: "samedi-photos",
-    date: "2026-06-13",
+    startsAt: "2026-06-13T16:30:00+02:00",
     timeLabel: "16h30",
     title: "Début des photos invités",
     baseText: "Reste à l'affût : le programme s'actualise automatiquement.",
@@ -25,7 +25,7 @@ const WEDDING_EVENTS = [
   },
   {
     id: "samedi-vin-honneur",
-    date: "2026-06-13",
+    startsAt: "2026-06-13T17:00:00+02:00",
     timeLabel: "17h00",
     title: "Début du vin d’honneur",
     baseText: "Consulte cette carte pour connaître le prochain temps fort.",
@@ -33,7 +33,7 @@ const WEDDING_EVENTS = [
   },
   {
     id: "samedi-reception",
-    date: "2026-06-13",
+    startsAt: "2026-06-13T20:00:00+02:00",
     timeLabel: "20h00",
     title: "Début de la réception",
     baseText: "Le moment principal change automatiquement selon l'agenda.",
@@ -41,7 +41,7 @@ const WEDDING_EVENTS = [
   },
   {
     id: "samedi-dancefloor",
-    date: "2026-06-13",
+    startsAt: "2026-06-13T23:00:00+02:00",
     timeLabel: "23h00 → 4h00",
     title: "Fin du repas & dancefloor",
     baseText: "Le programme se mettra à jour tout seul pendant le week-end.",
@@ -49,7 +49,7 @@ const WEDDING_EVENTS = [
   },
   {
     id: "samedi-after",
-    date: "2026-06-13",
+    startsAt: "2026-06-14T04:00:00+02:00",
     timeLabel: "Dès 4h00",
     title: "After au Saloon",
     baseText: "Ce bloc met en avant le prochain moment à venir.",
@@ -57,7 +57,7 @@ const WEDDING_EVENTS = [
   },
   {
     id: "dimanche-piscine",
-    date: "2026-06-14",
+    startsAt: "2026-06-14T10:00:00+02:00",
     timeLabel: "10h00",
     title: "Ouverture de la piscine",
     baseText: "La journée de dimanche est aussi suivie automatiquement.",
@@ -65,7 +65,7 @@ const WEDDING_EVENTS = [
   },
   {
     id: "dimanche-brunch",
-    date: "2026-06-14",
+    startsAt: "2026-06-14T11:00:00+02:00",
     timeLabel: "Dès 11h00",
     title: "Brunch",
     baseText: "Quand un événement approche, ce message devient le contenu spécial.",
@@ -73,7 +73,7 @@ const WEDDING_EVENTS = [
   },
   {
     id: "dimanche-pool-party",
-    date: "2026-06-14",
+    startsAt: "2026-06-14T14:00:00+02:00",
     timeLabel: "14h00",
     title: "Pool Party",
     baseText: "L'app suit l'ordre des événements sans recharger la page.",
@@ -81,7 +81,7 @@ const WEDDING_EVENTS = [
   },
   {
     id: "dimanche-fin",
-    date: "2026-06-14",
+    startsAt: "2026-06-14T16:30:00+02:00",
     timeLabel: "16h30",
     title: "Fin du mariage",
     baseText: "Après le dernier moment, ce bloc passe en mode clôture.",
@@ -98,7 +98,7 @@ function renderHero(event, { isSpecial, note }) {
   const textEl = document.querySelector("[data-programme-hero-text]");
   const noteEl = document.querySelector("[data-programme-hero-note]");
 
-  if (!timeEl || !titleEl || !textEl || !noteEl) return;
+  if (!timeEl || !titleEl || !textEl || !noteEl || !event) return;
 
   timeEl.textContent = event.timeLabel;
   titleEl.textContent = event.title;
@@ -113,38 +113,59 @@ function renderHero(event, { isSpecial, note }) {
   }
 }
 
-function getNextEventByDate(events, now) {
-  const weddingStart = new Date("2026-06-13T00:00:00+02:00");
-  if (now < weddingStart) {
-    return { event: events[0], isSpecial: false };
+function highlightCurrentMoment(currentId) {
+  const items = document.querySelectorAll("[data-programme-item]");
+  items.forEach((item) => item.classList.remove("timeline-item-featured"));
+
+  if (!currentId) return;
+
+  const currentItem = document.querySelector(`[data-programme-item="${currentId}"]`);
+  if (currentItem) {
+    currentItem.classList.add("timeline-item-featured");
+  }
+}
+
+function getCurrentAndNextByDate(events, now) {
+  const timestamps = events.map((event) => ({
+    ...event,
+    at: new Date(event.startsAt).getTime(),
+  }));
+  const nowTime = now.getTime();
+
+  const nextIndex = timestamps.findIndex((event) => event.at > nowTime);
+
+  if (nextIndex === 0) {
+    return { current: null, next: timestamps[0], isSpecial: false };
   }
 
-  const dayKey = now.toISOString().slice(0, 10);
-  const todayEvents = events.filter((event) => event.date === dayKey);
-
-  if (todayEvents.length > 0) {
-    return { event: todayEvents[0], isSpecial: true };
+  if (nextIndex === -1) {
+    return {
+      current: timestamps[timestamps.length - 1],
+      next: timestamps[timestamps.length - 1],
+      isSpecial: false,
+    };
   }
 
-  const lastDay = "2026-06-14";
-  if (dayKey > lastDay) {
-    return { event: events[events.length - 1], isSpecial: false };
-  }
-
-  const next = events.find((event) => event.date > dayKey) || events[0];
-  return { event: next, isSpecial: false };
+  return {
+    current: timestamps[nextIndex - 1],
+    next: timestamps[nextIndex],
+    isSpecial: true,
+  };
 }
 
 function startPrototypeRotation(events) {
-  let index = 0;
+  let nextIndex = 0;
 
   const render = () => {
-    const event = events[index % events.length];
-    renderHero(event, {
+    const next = events[nextIndex % events.length];
+    const current = events[(nextIndex - 1 + events.length) % events.length];
+
+    renderHero(next, {
       isSpecial: true,
       note: "Mode prototype activé : rotation automatique toutes les 15 secondes.",
     });
-    index += 1;
+    highlightCurrentMoment(current.id);
+    nextIndex += 1;
   };
 
   render();
@@ -159,11 +180,14 @@ export function initProgramme() {
     return () => window.clearInterval(intervalId);
   }
 
-  const current = getNextEventByDate(events, new Date());
-  renderHero(current.event, {
-    isSpecial: current.isSpecial,
-    note: current.isSpecial ? "Moment à venir détecté automatiquement." : "Mode pré-mariage : contenu d'information générale.",
+  const state = getCurrentAndNextByDate(events, new Date());
+  renderHero(state.next, {
+    isSpecial: state.isSpecial,
+    note: state.isSpecial
+      ? "Moment à venir détecté automatiquement."
+      : "Mode pré/post-mariage : contenu d'information générale.",
   });
+  highlightCurrentMoment(state.current?.id || null);
 
   return () => {};
 }
