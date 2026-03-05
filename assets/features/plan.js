@@ -203,7 +203,9 @@ export async function initPlan() {
   const mapContainer = document.getElementById("domainMap");
   const detailContainer = document.getElementById("placeDetail");
   const shortcutsContainer = document.getElementById("placeShortcuts");
-  if (!mapContainer || !detailContainer || !shortcutsContainer) return;
+  const prevButton = document.getElementById("placePrev");
+  const nextButton = document.getElementById("placeNext");
+  if (!mapContainer || !detailContainer || !shortcutsContainer || !prevButton || !nextButton) return;
 
   const backgroundSrc = mapContainer.dataset.mapImage || DEFAULT_MAP_BG;
   preloadBackground(backgroundSrc);
@@ -226,11 +228,17 @@ export async function initPlan() {
     )
     .join("");
 
-  let selectedId = "chateau";
+  const carouselPlaces = places.filter((p) => mappedIds.has(p.id));
+  const placeIndexById = new Map(carouselPlaces.map((place, index) => [place.id, index]));
+
+  let selectedId = placeIndexById.has("chateau") ? "chateau" : carouselPlaces[0]?.id || "";
 
   function setSelected(id) {
+    if (!id || id === selectedId) return;
+
     const place = byId.get(id);
     if (!place) return;
+
     selectedId = id;
     detailContainer.innerHTML = renderDetail(place);
 
@@ -244,6 +252,16 @@ export async function initPlan() {
       const isActive = el.getAttribute("data-place-id") === id;
       el.classList.toggle("is-active", isActive);
     });
+  }
+
+
+  function shiftSelection(offset) {
+    if (!carouselPlaces.length || !selectedId) return;
+    const currentIndex = placeIndexById.get(selectedId);
+    if (typeof currentIndex !== "number") return;
+
+    const nextIndex = (currentIndex + offset + carouselPlaces.length) % carouselPlaces.length;
+    setSelected(carouselPlaces[nextIndex].id);
   }
 
   mapContainer.querySelectorAll(".map-hotspot").forEach((hotspot) => {
@@ -263,5 +281,12 @@ export async function initPlan() {
     });
   });
 
-  setSelected(selectedId);
+  prevButton.addEventListener("click", () => shiftSelection(-1));
+  nextButton.addEventListener("click", () => shiftSelection(1));
+
+  if (selectedId) {
+    const initialId = selectedId;
+    selectedId = "";
+    setSelected(initialId);
+  }
 }

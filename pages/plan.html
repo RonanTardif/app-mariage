@@ -13,7 +13,11 @@
     ></div>
     <p class="map-help">Astuce : place ton image dans <code>assets/plan-domaine.jpg</code> pour l’avoir en fond.</p>
 
-    <div id="placeDetail" class="list-item map-detail" aria-live="polite"></div>
+    <div class="map-carousel" aria-label="Défilement des lieux">
+      <button id="placePrev" class="btn map-carousel-nav" type="button" aria-label="Lieu précédent">←</button>
+      <div id="placeDetail" class="list-item map-detail" aria-live="polite"></div>
+      <button id="placeNext" class="btn map-carousel-nav" type="button" aria-label="Lieu suivant">→</button>
+    </div>
 
     <div id="placeShortcuts" class="map-shortcuts"></div>
   </div>
