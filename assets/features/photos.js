@@ -62,11 +62,6 @@ function personSlots(person, index) {
   return slots;
 }
 
-function nowHHMM() {
-  const d = new Date();
-  return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-}
-
 function preparePeopleIndex(dataStore, index) {
   return (dataStore.people || []).map((person) => ({
     person,
@@ -83,6 +78,8 @@ export async function initPhotos() {
   let dataIndex = null;
   let peopleIndex = [];
   let selectedPersonId = null;
+  let showResults = false;
+  let serverUpdatedAt = "--:--";
   let refreshTimer = null;
 
   const searchEl = document.getElementById("search");
@@ -92,7 +89,6 @@ export async function initPhotos() {
   const updatedAtEl = document.getElementById("updatedAt");
   const slotsListEl = document.getElementById("slotsList");
   const statusLineEl = document.getElementById("statusLine");
-  const clearBtn = document.getElementById("clearBtn");
   const refreshBtn = document.getElementById("refreshBtn");
 
   if (!searchEl || !resultsEl || !profileEl || !profileNameEl || !updatedAtEl || !slotsListEl || !statusLineEl) {
@@ -123,7 +119,7 @@ export async function initPhotos() {
     resultsEl.innerHTML = "";
 
     const q = normalizeName(query);
-    if (!q || q.length < 2) {
+    if (!showResults || !q || q.length < 2) {
       resultsEl.style.display = "none";
       return;
     }
@@ -163,6 +159,8 @@ export async function initPhotos() {
       div.addEventListener("click", () => {
         selectedPersonId = person.person_id;
         searchEl.value = person.display_name;
+        showResults = false;
+        resultsEl.innerHTML = "";
         resultsEl.style.display = "none";
         renderProfile();
       });
@@ -172,15 +170,21 @@ export async function initPhotos() {
   }
 
   function renderProfile() {
-    if (!dataStore || !selectedPersonId || !dataIndex) return;
+    if (!dataStore || !selectedPersonId || !dataIndex) {
+      profileEl.style.display = "none";
+      return;
+    }
 
     const person = (dataStore.people || []).find((p) => String(p.person_id) === String(selectedPersonId));
-    if (!person) return;
+    if (!person) {
+      profileEl.style.display = "none";
+      return;
+    }
 
     const slots = personSlots(person, dataIndex);
 
     profileNameEl.textContent = person.display_name;
-    updatedAtEl.textContent = `Mis à jour : ${nowHHMM()}`;
+    updatedAtEl.textContent = `Mis à jour : ${serverUpdatedAt}`;
 
     slotsListEl.innerHTML = "";
 
@@ -223,13 +227,23 @@ export async function initPhotos() {
 
       applyData(data);
 
-      const serverTime = data.updated_at
+      serverUpdatedAt = data.updated_at
         ? new Date(data.updated_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
         : "--:--";
 
-      setStatus(`✅ Données OK (maj serveur: ${serverTime})`);
+      setStatus("Prêt.");
 
-      renderResults(searchEl.value);
+      const selectedPerson = (data.people || []).find((p) => String(p.person_id) === String(selectedPersonId));
+      const hasLockedSelection = Boolean(selectedPerson && normalizeName(searchEl.value) === normalizeName(selectedPerson.display_name));
+
+      if (!hasLockedSelection) {
+        renderResults(searchEl.value);
+      } else {
+        showResults = false;
+        resultsEl.innerHTML = "";
+        resultsEl.style.display = "none";
+      }
+
       renderProfile();
     } catch (err) {
       setStatus(`❌ Erreur: ${err.message || err}`);
@@ -240,19 +254,19 @@ export async function initPhotos() {
 
   searchEl.addEventListener("input", (e) => {
     if (!dataStore) return;
-    renderResults(e.target.value);
-  });
 
-  if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      searchEl.value = "";
-      resultsEl.innerHTML = "";
-      resultsEl.style.display = "none";
+    const query = e.target.value;
+    const selectedPerson = (dataStore.people || []).find((p) => String(p.person_id) === String(selectedPersonId));
+
+    if (!selectedPerson || normalizeName(query) !== normalizeName(selectedPerson.display_name)) {
       selectedPersonId = null;
       profileEl.style.display = "none";
-      setStatus("Prêt.");
-    });
-  }
+      showResults = true;
+    }
+
+    renderResults(query);
+  });
+
 
   if (refreshBtn) {
     refreshBtn.addEventListener("click", () => {
@@ -262,13 +276,17 @@ export async function initPhotos() {
 
   document.addEventListener("click", (e) => {
     const within = e.target === searchEl || resultsEl.contains(e.target);
-    if (!within) resultsEl.style.display = "none";
+    if (!within) {
+      showResults = false;
+      resultsEl.style.display = "none";
+    }
   });
 
   const cachedData = getCachedPhotosData();
   if (cachedData?.people && cachedData?.groups && cachedData?.slots) {
     applyData(cachedData);
     setStatus("⚡ Données en cache chargées");
+    showResults = true;
     renderResults(searchEl.value);
     renderProfile();
   }
