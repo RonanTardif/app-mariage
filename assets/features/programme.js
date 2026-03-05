@@ -22,6 +22,7 @@ const WEDDING_EVENTS = [
     title: "Début des photos invités",
     baseText: "Reste à l'affût : le programme s'actualise automatiquement.",
     specialText: "Direction le lac pour immortaliser les premiers moments ensemble 📸",
+    ctaText: "Regarde ton créneau photo sur la page Photos.",
   },
   {
     id: "samedi-vin-honneur",
@@ -97,8 +98,10 @@ function renderHero(event, { isSpecial, note }) {
   const titleEl = document.querySelector("[data-programme-hero-title]");
   const textEl = document.querySelector("[data-programme-hero-text]");
   const noteEl = document.querySelector("[data-programme-hero-note]");
+  const linkWrapEl = document.querySelector("[data-programme-hero-link-wrap]");
+  const linkEl = document.querySelector("[data-programme-hero-link]");
 
-  if (!timeEl || !titleEl || !textEl || !noteEl || !event) return;
+  if (!timeEl || !titleEl || !textEl || !noteEl || !linkWrapEl || !linkEl || !event) return;
 
   timeEl.textContent = event.timeLabel;
   titleEl.textContent = event.title;
@@ -110,6 +113,14 @@ function renderHero(event, { isSpecial, note }) {
   } else {
     noteEl.hidden = true;
     noteEl.textContent = "";
+  }
+
+  if (event.ctaText) {
+    linkWrapEl.hidden = false;
+    linkEl.textContent = event.ctaText;
+  } else {
+    linkWrapEl.hidden = true;
+    linkEl.textContent = "";
   }
 }
 
