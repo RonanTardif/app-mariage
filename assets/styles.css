@@ -366,30 +366,29 @@ button, input { font-family: inherit; }
 .map-carousel {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
 }
 
 .map-carousel-nav {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
   padding: 0;
-  border: 1px solid rgba(111, 115, 119, 0.28);
-  background: rgba(255, 255, 255, 0.92);
-  color: rgba(28, 28, 28, 0.82);
-  font-size: 22px;
+  border: none;
+  background: transparent;
+  color: rgba(28, 28, 28, 0.72);
+  font-size: 26px;
   line-height: 1;
-  box-shadow: 0 8px 20px rgba(28, 28, 28, 0.08);
+  box-shadow: none;
 }
 
 .map-carousel-nav:hover,
 .map-carousel-nav:focus-visible {
-  background: rgba(155, 170, 154, 0.2);
-  border-color: rgba(111, 115, 119, 0.45);
-  transform: translateY(-1px);
+  background: transparent;
+  color: rgba(28, 28, 28, 0.95);
+  transform: none;
 }
 
 .map-detail {
@@ -399,14 +398,15 @@ button, input { font-family: inherit; }
 
 @media (max-width: 600px) {
   .map-carousel {
-    gap: 8px;
+    grid-template-columns: 28px minmax(0, 1fr) 28px;
+    gap: 4px;
   }
 
   .map-carousel-nav {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    font-size: 20px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    font-size: 24px;
   }
 }
 
