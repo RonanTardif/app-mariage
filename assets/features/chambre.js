@@ -14,41 +14,99 @@ function line(label, value) {
   `;
 }
 
-function renderResultCards(matches) {
-  return matches
-    .slice(0, 8)
-    .map((r) => {
-      const rows = [];
+function personLabel(room) {
+  return room.display_name || room.full_name || room.person_id || "—";
+}
 
-      if (isNonEmpty(r.building)) rows.push(line("Bâtiment", r.building));
-      if (isNonEmpty(r.room_name)) rows.push(line("Chambre", r.room_name));
-      if (isNonEmpty(r.notes)) rows.push(line("Infos", r.notes));
+function roomKey(room) {
+  return normalizeName(`${room.building || ""}::${room.room_name || ""}`);
+}
 
-      if (isNonEmpty(r.bed_type)) rows.push(line("Lit", r.bed_type));
-      if (isNonEmpty(r.capacity)) rows.push(line("Capacité", r.capacity));
-      if (isNonEmpty(r.bathroom)) rows.push(line("Salle de bain", r.bathroom));
-      if (isNonEmpty(r.extra)) rows.push(line("Extra", r.extra));
+function renderSearchResults(matches) {
+  return `
+    <div class="list">
+      ${matches
+        .slice(0, 8)
+        .map(
+          (r) => `
+        <button class="btn js-room-match" type="button">
+          <span class="icon sage">👤</span>
+          <span class="btn-text">
+            <span class="btn-title">${escapeHTML(personLabel(r))}</span>
+            <span class="btn-desc">Voir ma chambre</span>
+          </span>
+        </button>
+      `
+        )
+        .join("")}
+    </div>
+  `;
+}
 
-      return `
-        <div class="card" style="box-shadow:none;">
-          <div class="card-inner">
-            <div class="badge">🛏 ${escapeHTML(r.building || "Chambre")}</div>
-            <h3 class="card-title" style="margin-top:10px;">${escapeHTML(r.display_name || r.person_id || "—")}</h3>
+function metadataRows(room) {
+  const rows = [];
+  if (isNonEmpty(room.building)) rows.push(line("Bâtiment", room.building));
+  if (isNonEmpty(room.room_name)) rows.push(line("Chambre", room.room_name));
+  if (isNonEmpty(room.notes)) rows.push(line("Infos", room.notes));
+  if (isNonEmpty(room.bed_type)) rows.push(line("Lit", room.bed_type));
+  if (isNonEmpty(room.capacity)) rows.push(line("Capacité", room.capacity));
+  if (isNonEmpty(room.bathroom)) rows.push(line("Salle de bain", room.bathroom));
+  if (isNonEmpty(room.extra)) rows.push(line("Extra", room.extra));
+  return rows;
+}
 
-            <div class="kv">
-              ${rows.join("") || `<div class="small">Aucune info disponible.</div>`}
-            </div>
+function renderSelectedRoomCard(selectedRoom, isRoommateVisible, roommates) {
+  const rows = metadataRows(selectedRoom);
+
+  return `
+    <div class="card" style="margin-top:12px; box-shadow:none;">
+      <div class="card-inner">
+        <div class="badge">🛏 Ma chambre</div>
+        <h3 class="card-title" style="margin-top:10px;">${escapeHTML(personLabel(selectedRoom))}</h3>
+
+        <div class="kv">
+          ${rows.join("") || `<div class="small">Aucune info disponible.</div>`}
+        </div>
+
+        <button id="showRoommates" class="btn" type="button" style="margin-top:12px;">
+          <span class="icon rose">👥</span>
+          <span class="btn-text">
+            <span class="btn-title">Afficher ma chambre</span>
+            <span class="btn-desc">Voir les personnes dans la même chambre</span>
+          </span>
+        </button>
+      </div>
+    </div>
+    ${
+      isRoommateVisible
+        ? `
+      <div class="card" style="margin-top:12px; box-shadow:none;">
+        <div class="card-inner">
+          <div class="badge ok">👥 Colocataires</div>
+          <div class="list" style="margin-top:10px;">
+            ${roommates
+              .map(
+                (mate) => `
+              <div class="list-item">
+                <p class="list-title">${escapeHTML(personLabel(mate))}</p>
+              </div>
+            `
+              )
+              .join("")}
           </div>
         </div>
-      `;
-    })
-    .join("");
+      </div>
+    `
+        : ""
+    }
+  `;
 }
 
 function prepareRoomIndex(rooms) {
   return rooms.map((room) => ({
     room,
     searchName: normalizeName(room.display_name || ""),
+    searchFullName: normalizeName(room.full_name || ""),
     searchPersonId: normalizeName(room.person_id || ""),
   }));
 }
@@ -60,11 +118,13 @@ export async function initChambre() {
 
   const cachedPayload = getCachedRoomsData();
   let rooms = Array.isArray(cachedPayload?.rooms) ? cachedPayload.rooms : [];
+  if (!rooms.length && Array.isArray(cachedPayload)) rooms = cachedPayload;
   let roomIndex = prepareRoomIndex(rooms);
 
   try {
     const payload = await fetchRoomsData();
     rooms = Array.isArray(payload?.rooms) ? payload.rooms : [];
+    if (!rooms.length && Array.isArray(payload)) rooms = payload;
     roomIndex = prepareRoomIndex(rooms);
   } catch (e) {
     if (!rooms.length) {
@@ -73,27 +133,90 @@ export async function initChambre() {
     }
   }
 
-  function render(matches) {
-    if (!matches.length) {
-      result.innerHTML = renderNotFound("Aucun résultat pour le moment.");
-      return;
-    }
+  let activeMatches = [];
+  let selectedRoom = null;
+  let showRoommates = false;
 
-    result.innerHTML = renderResultCards(matches);
+  function roomMatchesForSelected() {
+    if (!selectedRoom) return [];
+    const selectedKey = roomKey(selectedRoom);
+    return rooms.filter((room) => roomKey(room) === selectedKey);
   }
 
-  function search() {
+  function isSelectedInputLocked() {
+    if (!selectedRoom) return false;
+    return normalizeName(input.value) === normalizeName(personLabel(selectedRoom));
+  }
+
+  function render() {
     const q = normalizeName(input.value);
-    if (!q) {
+    if (!q && !selectedRoom) {
       result.innerHTML = "";
       return;
     }
 
-    const matches = roomIndex
-      .filter((item) => item.searchName.includes(q) || item.searchPersonId.includes(q))
+    const blocks = [];
+    const showResults = !selectedRoom || !isSelectedInputLocked();
+
+    if (showResults) {
+      if (!activeMatches.length) {
+        blocks.push(renderNotFound("Aucun résultat pour le moment."));
+      } else {
+        blocks.push(renderSearchResults(activeMatches));
+      }
+    }
+
+    if (selectedRoom) {
+      const roommates = roomMatchesForSelected();
+      blocks.push(renderSelectedRoomCard(selectedRoom, showRoommates, roommates));
+    }
+
+    result.innerHTML = blocks.join("\n");
+
+    if (showResults && activeMatches.length) {
+      result.querySelectorAll(".js-room-match").forEach((btn, index) => {
+        btn.addEventListener("click", () => {
+          selectedRoom = activeMatches[index];
+          showRoommates = false;
+          input.value = personLabel(selectedRoom);
+          activeMatches = [];
+          render();
+        });
+      });
+    }
+
+    const roommatesBtn = result.querySelector("#showRoommates");
+    if (roommatesBtn) {
+      roommatesBtn.addEventListener("click", () => {
+        showRoommates = true;
+        render();
+      });
+    }
+  }
+
+  function search() {
+    const q = normalizeName(input.value);
+
+    if (selectedRoom) {
+      if (q === normalizeName(personLabel(selectedRoom))) {
+        render();
+        return;
+      }
+      selectedRoom = null;
+      showRoommates = false;
+    }
+
+    if (!q) {
+      activeMatches = [];
+      render();
+      return;
+    }
+
+    activeMatches = roomIndex
+      .filter((item) => item.searchName.includes(q) || item.searchFullName.includes(q) || item.searchPersonId.includes(q))
       .map((item) => item.room);
 
-    render(matches);
+    render();
   }
 
   input.addEventListener("input", search);

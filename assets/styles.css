@@ -185,10 +185,14 @@ button, input { font-family: inherit; }
 .search input {
   width: 100%;
   padding: 14px 14px;
+  font-size: 16px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.9);
   outline: none;
+}
+.search input::placeholder {
+  font-size: 16px;
 }
 .search input:focus { border-color: rgba(155, 170, 154, 0.9); }
 
