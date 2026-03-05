@@ -1,5 +1,5 @@
 import { routes, getRouteFromHash } from "./router.js";
-import { setActiveNav, setClock } from "./ui.js";
+import { setActiveNav } from "./ui.js";
 import { initPage } from "./inits.js";
 import { warmupAppCaches } from "./data-cache.js";
 import { warmupPlanAssets } from "./features/plan.js";
@@ -22,10 +22,6 @@ async function loadPage(routePath) {
   await initPage(routePath);
 }
 
-function tickClock() {
-  setClock();
-  setInterval(setClock, 1000 * 10);
-}
 
 
 function registerServiceWorker() {
@@ -63,7 +59,6 @@ function onRouteChange() {
 
 window.addEventListener("hashchange", onRouteChange);
 
-tickClock();
 initPwaInstall();
 registerServiceWorker();
 onRouteChange();
