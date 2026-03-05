@@ -231,7 +231,7 @@ export async function initPhotos() {
         ? new Date(data.updated_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
         : "--:--";
 
-      setStatus("Prêt.");
+      setStatus("");
 
       const selectedPerson = (data.people || []).find((p) => String(p.person_id) === String(selectedPersonId));
       const hasLockedSelection = Boolean(selectedPerson && normalizeName(searchEl.value) === normalizeName(selectedPerson.display_name));
