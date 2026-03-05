@@ -8,6 +8,7 @@ function isInStandaloneMode() {
 
 export function initPwaInstall() {
   const installBtn = document.getElementById("installBtn");
+  const clockChip = document.getElementById("clockChip");
   const iosModal = document.getElementById("iosInstallModal");
   const closeModalBtn = document.getElementById("closeIosModal");
 
@@ -22,6 +23,13 @@ export function initPwaInstall() {
     iosModal.style.display = isVisible ? "grid" : "none";
   };
 
+  const setClockVisibility = (isVisible) => {
+    if (!clockChip) {
+      return;
+    }
+    clockChip.hidden = !isVisible;
+  };
+
   const openIosModal = () => setIosModalVisibility(true);
   const closeIosModal = () => setIosModalVisibility(false);
 
@@ -29,10 +37,27 @@ export function initPwaInstall() {
     installBtn.hidden = true;
   };
 
-  closeIosModal();
+  const applyStandaloneState = () => {
+    const standalone = isInStandaloneMode();
+    setClockVisibility(standalone);
+    if (standalone) {
+      hideInstallCta();
+      closeIosModal();
+    }
+    return standalone;
+  };
 
-  if (isInStandaloneMode()) {
-    hideInstallCta();
+  closeIosModal();
+  const startsInStandalone = applyStandaloneState();
+
+  const displayModeMedia = window.matchMedia("(display-mode: standalone)");
+  if (displayModeMedia.addEventListener) {
+    displayModeMedia.addEventListener("change", applyStandaloneState);
+  } else if (displayModeMedia.addListener) {
+    displayModeMedia.addListener(applyStandaloneState);
+  }
+
+  if (startsInStandalone) {
     return;
   }
 
@@ -77,6 +102,7 @@ export function initPwaInstall() {
 
   window.addEventListener("appinstalled", () => {
     hideInstallCta();
+    setClockVisibility(true);
     deferredPrompt = null;
   });
 }
