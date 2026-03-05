@@ -138,11 +138,6 @@ function renderSVG(backgroundSrc) {
         (spot) => `
           <g class="map-hotspot" data-place-id="${spot.id}" tabindex="0" role="button" aria-label="${spot.label}">
             <polygon points="${spot.points}" class="map-zone" />
-            <text class="map-zone-label"
-              x="${spot.points.split(" ")[0].split(",")[0]}"
-              y="${Number(spot.points.split(" ")[0].split(",")[1]) - 8}">
-              ${spot.label}
-            </text>
           </g>
         `
       ).join("")}
@@ -169,7 +164,6 @@ function renderSVG_old(backgroundSrc) {
         (spot) => `
           <g class="map-hotspot" data-place-id="${spot.id}" tabindex="0" role="button" aria-label="${spot.label}">
             <polygon points="${spot.points}" class="map-zone" />
-            <text class="map-zone-label" x="${spot.points.split(" ")[0].split(",")[0]}" y="${Number(spot.points.split(" ")[0].split(",")[1]) - 8}">${spot.label}</text>
           </g>
         `
       ).join("")}
