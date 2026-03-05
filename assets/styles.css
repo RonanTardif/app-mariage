@@ -700,3 +700,61 @@ button, input { font-family: inherit; }
 .admin-move-btn {
   display: none !important;
 }
+
+.topbar-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip-action {
+  cursor: pointer;
+  font-weight: 800;
+  border: 1px solid rgba(155, 170, 154, 0.5);
+  background: rgba(155, 170, 154, 0.18);
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(28, 28, 28, 0.45);
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal-card {
+  width: min(480px, 100%);
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.modal-list {
+  margin: 10px 0 16px;
+  padding-left: 22px;
+  color: rgba(28, 28, 28, 0.78);
+  line-height: 1.5;
+}
+
+.modal-close {
+  width: 100%;
+}
+
+
+html.is-standalone #installBtn {
+  display: none !important;
+}
+
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  #installBtn {
+    display: none !important;
+  }
+}
