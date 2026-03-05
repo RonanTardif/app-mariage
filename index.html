@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Mariage Ronan & Lorie</title>
     <meta name="theme-color" content="#9BAA9A" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
     <link rel="stylesheet" href="./assets/styles.css" />
   </head>
   <body>
@@ -19,10 +23,7 @@
         </a>
 
         <div class="topbar-right">
-          <div class="chip">
-            <span class="chip-label">Heure</span>
-            <span id="clock" class="chip-value">--:--</span>
-          </div>
+          <button id="installBtn" class="chip chip-action" hidden>Installer</button>
         </div>
       </header>
 
@@ -37,6 +38,17 @@
         <a href="#/chambre" class="nav-item" data-route="/chambre">Chambre</a>
         <a href="#/photos" class="nav-item" data-route="/photos">Photos</a>
       </nav>
+    </div>
+
+    <div id="iosInstallModal" class="modal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="iosInstallTitle">
+        <h2 id="iosInstallTitle" class="card-title">Installer sur iPhone</h2>
+        <ol class="modal-list">
+          <li>Appuie sur <strong>Partager</strong> (carré avec une flèche).</li>
+          <li>Puis choisis <strong>Sur l'écran d'accueil</strong>.</li>
+        </ol>
+        <button id="closeIosModal" class="btn modal-close">Fermer</button>
+      </div>
     </div>
 
     <script type="module" src="./assets/app.js"></script>
