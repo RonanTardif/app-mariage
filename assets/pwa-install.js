@@ -18,13 +18,20 @@ export function initPwaInstall() {
 
   let deferredPrompt = null;
 
-  const openIosModal = () => iosModal.removeAttribute("hidden");
-  const closeIosModal = () => iosModal.setAttribute("hidden", "");
+  const setIosModalVisibility = (isVisible) => {
+    iosModal.hidden = !isVisible;
+    iosModal.style.display = isVisible ? "grid" : "none";
+  };
+
+  const openIosModal = () => setIosModalVisibility(true);
+  const closeIosModal = () => setIosModalVisibility(false);
 
   const hideInstallCta = () => {
     installBtn.hidden = true;
     installHelpBtn.hidden = true;
   };
+
+  closeIosModal();
 
   if (isInStandaloneMode()) {
     hideInstallCta();
@@ -37,6 +44,11 @@ export function initPwaInstall() {
     closeModalBtn.addEventListener("click", closeIosModal);
     iosModal.addEventListener("click", (event) => {
       if (event.target === iosModal) {
+        closeIosModal();
+      }
+    });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
         closeIosModal();
       }
     });
