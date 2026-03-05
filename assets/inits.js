@@ -12,6 +12,7 @@ import {
 } from "./features/leaderboard-api.js";
 import { initWhatsApp } from "./features/whatsapp.js";
 import { initAdmin } from "./features/admin.js";
+import { initProgramme } from "./features/programme.js";
 
 function loadScores() {
   return loadJSONFromStorage(QUIZ_STORAGE_KEY, []);
@@ -35,26 +36,50 @@ async function saveScore(scoreEntry) {
   }
 }
 
+let cleanupCurrentPage = null;
+
+function setCleanup(cleanup) {
+  if (typeof cleanupCurrentPage === "function") {
+    cleanupCurrentPage();
+  }
+  cleanupCurrentPage = typeof cleanup === "function" ? cleanup : null;
+}
+
 export async function initPage(routePath) {
+  let cleanup;
+
   switch (routePath) {
+    case "/programme":
+      cleanup = await initProgramme();
+      break;
     case "/plan":
-      return initPlan();
+      cleanup = await initPlan();
+      break;
     case "/chambre":
-      return initChambre();
+      cleanup = await initChambre();
+      break;
     case "/photos":
-      return initPhotos();
+      cleanup = await initPhotos();
+      break;
     case "/quiz":
-      return initQuiz({ saveScore });
+      cleanup = await initQuiz({ saveScore });
+      break;
     case "/leaderboard":
-      return initLeaderboard({
+      cleanup = await initLeaderboard({
         fetchScores: fetchLeaderboardScores,
         resetScores: resetLeaderboardScores,
       });
+      break;
     case "/whatsapp":
-      return initWhatsApp();
+      cleanup = await initWhatsApp();
+      break;
     case "/admin":
-      return initAdmin();
+      cleanup = await initAdmin();
+      break;
     default:
-      return;
+      cleanup = null;
+      break;
   }
+
+  setCleanup(cleanup);
 }

@@ -3,13 +3,16 @@
     <h2 class="card-title">Programme</h2>
     <p class="card-subtitle">Les moments clés du week-end, en un coup d'œil.</p>
 
-    <div class="programme-hero">
+    <div class="programme-hero" id="programmeHero" aria-live="polite">
       <div class="programme-hero-label">Prochain moment</div>
       <div class="programme-hero-main">
-        <span class="programme-hero-time">14h30</span>
-        <span class="programme-hero-title">Messe à la Cathédrale de Luçon</span>
+        <span class="programme-hero-time" data-programme-hero-time>Chargement…</span>
+        <span class="programme-hero-title" data-programme-hero-title>Chargement du programme</span>
       </div>
-      <p class="programme-hero-text">Ouverture officielle de cette belle journée 💒</p>
+      <p class="programme-hero-text" data-programme-hero-text>
+        Le prochain moment sera affiché automatiquement.
+      </p>
+      <p class="programme-hero-note small" data-programme-hero-note hidden></p>
     </div>
 
     <div class="hr"></div>
