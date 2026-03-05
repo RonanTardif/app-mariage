@@ -3,7 +3,14 @@ function isIos() {
 }
 
 function isInStandaloneMode() {
-  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  const hasMatchMedia = typeof window.matchMedia === "function";
+  const displayModeStandalone = hasMatchMedia && window.matchMedia("(display-mode: standalone)").matches;
+  const displayModeFullscreen = hasMatchMedia && window.matchMedia("(display-mode: fullscreen)").matches;
+  const displayModeMinimalUi = hasMatchMedia && window.matchMedia("(display-mode: minimal-ui)").matches;
+  const iosStandalone = window.navigator.standalone === true;
+  const androidTwaReferrer = typeof document.referrer === "string" && document.referrer.startsWith("android-app://");
+
+  return displayModeStandalone || displayModeFullscreen || displayModeMinimalUi || iosStandalone || androidTwaReferrer;
 }
 
 export function initPwaInstall() {
@@ -37,33 +44,50 @@ export function initPwaInstall() {
     installBtn.hidden = true;
   };
 
+  const showInstallCta = (label) => {
+    installBtn.textContent = label;
+    installBtn.hidden = false;
+  };
+
   const applyStandaloneState = () => {
     const standalone = isInStandaloneMode();
     setClockVisibility(standalone);
+
     if (standalone) {
       hideInstallCta();
       closeIosModal();
     }
+
     return standalone;
   };
 
   closeIosModal();
+  setClockVisibility(false);
   const startsInStandalone = applyStandaloneState();
 
-  const displayModeMedia = window.matchMedia("(display-mode: standalone)");
-  if (displayModeMedia.addEventListener) {
-    displayModeMedia.addEventListener("change", applyStandaloneState);
-  } else if (displayModeMedia.addListener) {
-    displayModeMedia.addListener(applyStandaloneState);
+  if (typeof window.matchMedia === "function") {
+    const displayModeMedia = window.matchMedia("(display-mode: standalone)");
+    if (displayModeMedia.addEventListener) {
+      displayModeMedia.addEventListener("change", applyStandaloneState);
+    } else if (displayModeMedia.addListener) {
+      displayModeMedia.addListener(applyStandaloneState);
+    }
   }
+
+  window.addEventListener("pageshow", applyStandaloneState);
+  window.addEventListener("focus", applyStandaloneState);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      applyStandaloneState();
+    }
+  });
 
   if (startsInStandalone) {
     return;
   }
 
   if (isIos()) {
-    installBtn.hidden = false;
-    installBtn.textContent = "Installer";
+    showInstallCta("Installer");
     installBtn.addEventListener("click", openIosModal);
     closeModalBtn.addEventListener("click", closeIosModal);
     iosModal.addEventListener("click", (event) => {
@@ -80,14 +104,17 @@ export function initPwaInstall() {
   }
 
   window.addEventListener("beforeinstallprompt", (event) => {
+    if (isInStandaloneMode()) {
+      return;
+    }
+
     event.preventDefault();
     deferredPrompt = event;
-    installBtn.textContent = "Installer l'app";
-    installBtn.hidden = false;
+    showInstallCta("Installer l'app");
   });
 
   installBtn.addEventListener("click", async () => {
-    if (!deferredPrompt) {
+    if (!deferredPrompt || isInStandaloneMode()) {
       return;
     }
 
@@ -96,7 +123,7 @@ export function initPwaInstall() {
       await deferredPrompt.userChoice;
     } finally {
       deferredPrompt = null;
-      installBtn.hidden = true;
+      hideInstallCta();
     }
   });
 
