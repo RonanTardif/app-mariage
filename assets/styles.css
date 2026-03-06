@@ -618,7 +618,7 @@ button, input { font-family: inherit; }
 
 .admin-slots-board.is-dragging .admin-drop-zone,
 .admin-slots-board.is-touch-dragging .admin-drop-zone {
-  height: 18px;
+  height: 54px;
   opacity: 1;
   pointer-events: auto;
   border-color: rgba(155, 170, 154, 0.45);
@@ -779,6 +779,13 @@ button, input { font-family: inherit; }
   padding-left: 22px;
   color: rgba(28, 28, 28, 0.78);
   line-height: 1.5;
+}
+
+.share-logo-inline {
+  width: 44px;
+  height: 36px;
+  vertical-align: text-bottom;
+  margin: 0 4px;
 }
 
 .modal-close {
