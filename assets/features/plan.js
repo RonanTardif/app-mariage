@@ -202,8 +202,9 @@ export async function initPlan() {
 
   const mapContainer = document.getElementById("domainMap");
   const detailContainer = document.getElementById("placeDetail");
-  const shortcutsContainer = document.getElementById("placeShortcuts");
-  if (!mapContainer || !detailContainer || !shortcutsContainer) return;
+  const prevButton = document.getElementById("placePrev");
+  const nextButton = document.getElementById("placeNext");
+  if (!mapContainer || !detailContainer || !prevButton || !nextButton) return;
 
   const backgroundSrc = mapContainer.dataset.mapImage || DEFAULT_MAP_BG;
   preloadBackground(backgroundSrc);
@@ -216,21 +217,17 @@ export async function initPlan() {
   }
 
   const mappedIds = new Set(MAP_SPOTS.map((spot) => spot.id));
-  const shortcuts = places.filter((p) => !mappedIds.has(p.id) && p.id === "foret");
-  shortcutsContainer.innerHTML = shortcuts
-    .map(
-      (place) =>
-        `<button class="badge map-shortcut" data-place-id="${escapeHTML(place.id)}" type="button">${escapeHTML(
-          place.title
-        )}</button>`
-    )
-    .join("");
+  const carouselPlaces = [...places];
+  const placeIndexById = new Map(carouselPlaces.map((place, index) => [place.id, index]));
 
-  let selectedId = "chateau";
+  let selectedId = placeIndexById.has("chateau") ? "chateau" : carouselPlaces[0]?.id || "";
 
   function setSelected(id) {
+    if (!id || id === selectedId) return;
+
     const place = byId.get(id);
     if (!place) return;
+
     selectedId = id;
     detailContainer.innerHTML = renderDetail(place);
 
@@ -240,10 +237,16 @@ export async function initPlan() {
       el.setAttribute("aria-pressed", isActive ? "true" : "false");
     });
 
-    shortcutsContainer.querySelectorAll(".map-shortcut").forEach((el) => {
-      const isActive = el.getAttribute("data-place-id") === id;
-      el.classList.toggle("is-active", isActive);
-    });
+  }
+
+
+  function shiftSelection(offset) {
+    if (!carouselPlaces.length || !selectedId) return;
+    const currentIndex = placeIndexById.get(selectedId);
+    if (typeof currentIndex !== "number") return;
+
+    const nextIndex = (currentIndex + offset + carouselPlaces.length) % carouselPlaces.length;
+    setSelected(carouselPlaces[nextIndex].id);
   }
 
   mapContainer.querySelectorAll(".map-hotspot").forEach((hotspot) => {
@@ -257,11 +260,12 @@ export async function initPlan() {
     });
   });
 
-  shortcutsContainer.querySelectorAll(".map-shortcut").forEach((shortcut) => {
-    shortcut.addEventListener("click", () => {
-      setSelected(shortcut.getAttribute("data-place-id") || "");
-    });
-  });
+  prevButton.addEventListener("click", () => shiftSelection(-1));
+  nextButton.addEventListener("click", () => shiftSelection(1));
 
-  setSelected(selectedId);
+  if (selectedId) {
+    const initialId = selectedId;
+    selectedId = "";
+    setSelected(initialId);
+  }
 }

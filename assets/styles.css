@@ -363,9 +363,53 @@ button, input { font-family: inherit; }
   stroke: rgba(28, 28, 28, 0.7);
 }
 
-.map-detail {
+.map-carousel {
   margin-top: 12px;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 6px;
 }
+
+.map-carousel-nav {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(28, 28, 28, 0.72);
+  font-size: 26px;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.map-carousel-nav:hover,
+.map-carousel-nav:focus-visible {
+  background: transparent;
+  color: rgba(28, 28, 28, 0.95);
+  transform: none;
+}
+
+.map-detail {
+  margin-top: 0;
+  min-height: 140px;
+}
+
+@media (max-width: 600px) {
+  .map-carousel {
+    grid-template-columns: 28px minmax(0, 1fr) 28px;
+    gap: 4px;
+  }
+
+  .map-carousel-nav {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    font-size: 24px;
+  }
+}
+
 
 .map-links {
   margin-top: 10px;
@@ -374,20 +418,6 @@ button, input { font-family: inherit; }
   gap: 8px;
 }
 
-.map-shortcuts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.map-shortcut {
-  cursor: pointer;
-}
-
-.map-shortcut.is-active {
-  background: rgba(155, 170, 154, 0.35);
-}
 
 .map-bg-image {
   opacity: 0.96;
@@ -397,11 +427,6 @@ button, input { font-family: inherit; }
   border-color: rgba(232, 191, 199, 0.95);
 }
 
-.map-help {
-  margin: 8px 2px 0;
-  font-size: 12px;
-  color: rgba(28, 28, 28, 0.6);
-}
 
 .programme-hero {
   margin-top: 14px;
