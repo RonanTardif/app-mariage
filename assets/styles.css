@@ -366,21 +366,21 @@ button, input { font-family: inherit; }
 .map-carousel {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: minmax(42px, 72px) minmax(0, 1fr) minmax(42px, 72px);
+  grid-template-columns: minmax(36px, 56px) minmax(0, 1fr) minmax(36px, 56px);
   align-items: stretch;
   gap: 8px;
 }
 
 .map-carousel-nav {
   width: 100%;
-  min-width: 42px;
+  min-width: 36px;
   min-height: 140px;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.78);
   color: rgba(28, 28, 28, 0.72);
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1;
   box-shadow: none;
   display: grid;
@@ -408,13 +408,13 @@ button, input { font-family: inherit; }
 
 @media (max-width: 600px) {
   .map-carousel {
-    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
     gap: 6px;
   }
 
   .map-carousel-nav {
-    min-width: 42px;
-    font-size: 26px;
+    min-width: 36px;
+    font-size: 24px;
   }
 }
 
