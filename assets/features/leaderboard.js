@@ -19,6 +19,14 @@ export function initLeaderboard({ fetchScores, resetScores }) {
 
   let hasRenderedScores = false;
 
+  function showStatus(message) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="4">${message}</td>
+      </tr>
+    `;
+  }
+
   function setTime() {
     const now = new Date();
     timeEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -26,6 +34,10 @@ export function initLeaderboard({ fetchScores, resetScores }) {
 
   async function render() {
     setTime();
+
+    if (!hasRenderedScores) {
+      showStatus("Chargement en cours…");
+    }
 
     let scores = [];
     try {
@@ -35,11 +47,7 @@ export function initLeaderboard({ fetchScores, resetScores }) {
         return;
       }
 
-      body.innerHTML = `
-        <tr>
-          <td colspan="4">Impossible de charger le leaderboard pour le moment.</td>
-        </tr>
-      `;
+      showStatus("Impossible de charger le leaderboard pour le moment.");
       return;
     }
 
