@@ -78,6 +78,10 @@ function renderSelectedRoomCard(selectedRoom, isRoommateVisible, roommates) {
           ${rows.join("") || `<div class="small">Aucune info disponible.</div>`}
         </div>
 
+        ${
+          isRoommateVisible
+            ? ""
+            : `
         <button id="showRoommates" class="btn" type="button" style="margin-top:12px;">
           <span class="icon rose">👥</span>
           <span class="btn-text">
@@ -85,6 +89,8 @@ function renderSelectedRoomCard(selectedRoom, isRoommateVisible, roommates) {
             <span class="btn-desc">Voir les personnes dans la même chambre</span>
           </span>
         </button>
+        `
+        }
       </div>
     </div>
     ${
