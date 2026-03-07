@@ -81,6 +81,7 @@ export async function initPhotos() {
   let showResults = false;
   let serverUpdatedAt = "--:--";
   let refreshTimer = null;
+  let isProfileRefreshing = false;
 
   const searchEl = document.getElementById("search");
   const resultsEl = document.getElementById("results");
@@ -97,6 +98,10 @@ export async function initPhotos() {
 
   function setStatus(msg) {
     statusLineEl.textContent = msg;
+  }
+
+  function setUpdatedAtLabel() {
+    updatedAtEl.textContent = isProfileRefreshing ? "Chargement des données…" : `Mis à jour : ${serverUpdatedAt}`;
   }
 
   function applyData(data) {
@@ -184,7 +189,7 @@ export async function initPhotos() {
     const slots = personSlots(person, dataIndex);
 
     profileNameEl.textContent = person.display_name;
-    updatedAtEl.textContent = `Mis à jour : ${serverUpdatedAt}`;
+    setUpdatedAtLabel();
 
     slotsListEl.innerHTML = "";
 
@@ -216,9 +221,17 @@ export async function initPhotos() {
     profileEl.style.display = "block";
   }
 
-  async function fetchData({ forceRefresh = false } = {}) {
+  async function fetchData({ forceRefresh = false, showProfileLoading = false } = {}) {
+    const displayLoadingOnProfile = Boolean(showProfileLoading && selectedPersonId);
+
     try {
-      setStatus("🔄 Chargement des données…");
+      if (displayLoadingOnProfile) {
+        isProfileRefreshing = true;
+        renderProfile();
+      } else {
+        setStatus("🔄 Chargement des données…");
+      }
+
       const data = await fetchPhotosData({ forceRefresh });
 
       if (!data?.people || !data?.groups || !data?.slots) {
@@ -231,7 +244,9 @@ export async function initPhotos() {
         ? new Date(data.updated_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
         : "--:--";
 
-      setStatus("");
+      if (!displayLoadingOnProfile) {
+        setStatus("");
+      }
 
       const selectedPerson = (data.people || []).find((p) => String(p.person_id) === String(selectedPersonId));
       const hasLockedSelection = Boolean(selectedPerson && normalizeName(searchEl.value) === normalizeName(selectedPerson.display_name));
@@ -247,6 +262,14 @@ export async function initPhotos() {
       renderProfile();
     } catch (err) {
       setStatus(`❌ Erreur: ${err.message || err}`);
+      if (displayLoadingOnProfile) {
+        renderProfile();
+      }
+    } finally {
+      if (displayLoadingOnProfile) {
+        isProfileRefreshing = false;
+        renderProfile();
+      }
     }
   }
 
@@ -270,7 +293,7 @@ export async function initPhotos() {
 
   if (refreshBtn) {
     refreshBtn.addEventListener("click", () => {
-      fetchData({ forceRefresh: true });
+      fetchData({ forceRefresh: true, showProfileLoading: true });
     });
   }
 
