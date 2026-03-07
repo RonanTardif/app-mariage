@@ -7,7 +7,6 @@ import { initQuiz } from "./features/quiz.js";
 import { initLeaderboard } from "./features/leaderboard.js";
 import {
   fetchLeaderboardScores,
-  resetLeaderboardScores,
   submitLeaderboardScore,
 } from "./features/leaderboard-api.js";
 import { initWhatsApp } from "./features/whatsapp.js";
@@ -45,6 +44,21 @@ function setCleanup(cleanup) {
   cleanupCurrentPage = typeof cleanup === "function" ? cleanup : null;
 }
 
+function updateHomeInstallHintVisibility() {
+  const hint = document.getElementById("homeInstallHint");
+  if (!hint) return;
+
+  const hasMatchMedia = typeof window.matchMedia === "function";
+  const standalone =
+    (hasMatchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+    (hasMatchMedia && window.matchMedia("(display-mode: fullscreen)").matches) ||
+    (hasMatchMedia && window.matchMedia("(display-mode: minimal-ui)").matches) ||
+    window.navigator.standalone === true ||
+    (typeof document.referrer === "string" && document.referrer.startsWith("android-app://"));
+
+  hint.hidden = standalone;
+}
+
 export async function initPage(routePath) {
   let cleanup;
 
@@ -67,7 +81,6 @@ export async function initPage(routePath) {
     case "/leaderboard":
       cleanup = await initLeaderboard({
         fetchScores: fetchLeaderboardScores,
-        resetScores: resetLeaderboardScores,
       });
       break;
     case "/whatsapp":
@@ -82,4 +95,5 @@ export async function initPage(routePath) {
   }
 
   setCleanup(cleanup);
+  updateHomeInstallHintVisibility();
 }

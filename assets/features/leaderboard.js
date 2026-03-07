@@ -11,10 +11,9 @@ function sortScores(scores) {
     .slice(0, 10);
 }
 
-export function initLeaderboard({ fetchScores, resetScores }) {
+export function initLeaderboard({ fetchScores }) {
   const body = document.getElementById("lbBody");
   const timeEl = document.getElementById("lbTime");
-  const resetBtn = document.getElementById("resetScores");
   if (!body || !timeEl) return;
 
   let hasRenderedScores = false;
@@ -81,15 +80,4 @@ export function initLeaderboard({ fetchScores, resetScores }) {
   }, 5000);
 
   window.addEventListener("hashchange", () => clearInterval(interval), { once: true });
-  if (resetBtn) {
-    resetBtn.addEventListener("click", async () => {
-      resetBtn.disabled = true;
-      try {
-        await resetScores();
-      } finally {
-        resetBtn.disabled = false;
-      }
-      render();
-    });
-  }
 }
