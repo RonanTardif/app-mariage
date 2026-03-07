@@ -71,13 +71,18 @@ function renderSelectedRoomCard(selectedRoom, isRoommateVisible, roommates) {
   return `
     <div class="card" style="margin-top:12px; box-shadow:none;">
       <div class="card-inner">
-        <div class="badge">🛏 Ma chambre</div>
-        <h3 class="card-title" style="margin-top:10px;">${escapeHTML(personLabel(selectedRoom))}</h3>
+        <h3 class="card-title">${escapeHTML(personLabel(selectedRoom))}</h3>
+
+        <div class="hr" style="margin-top:10px;"></div>
 
         <div class="kv">
           ${rows.join("") || `<div class="small">Aucune info disponible.</div>`}
         </div>
 
+        ${
+          isRoommateVisible
+            ? ""
+            : `
         <button id="showRoommates" class="btn" type="button" style="margin-top:12px;">
           <span class="icon rose">👥</span>
           <span class="btn-text">
@@ -85,30 +90,30 @@ function renderSelectedRoomCard(selectedRoom, isRoommateVisible, roommates) {
             <span class="btn-desc">Voir les personnes dans la même chambre</span>
           </span>
         </button>
+        `
+        }
+
+        ${
+          isRoommateVisible
+            ? `
+        <div class="hr" style="margin-top:12px;"></div>
+        <div class="small" style="font-weight:700; margin-top:10px;">👥 Colocataires</div>
+        <div class="list" style="margin-top:10px;">
+          ${roommates
+            .map(
+              (mate) => `
+            <div class="list-item">
+              <p class="list-title">${escapeHTML(personLabel(mate))}</p>
+            </div>
+          `
+            )
+            .join("")}
+        </div>
+      `
+            : ""
+        }
       </div>
     </div>
-    ${
-      isRoommateVisible
-        ? `
-      <div class="card" style="margin-top:12px; box-shadow:none;">
-        <div class="card-inner">
-          <div class="badge ok">👥 Colocataires</div>
-          <div class="list" style="margin-top:10px;">
-            ${roommates
-              .map(
-                (mate) => `
-              <div class="list-item">
-                <p class="list-title">${escapeHTML(personLabel(mate))}</p>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        </div>
-      </div>
-    `
-        : ""
-    }
   `;
 }
 
