@@ -89,6 +89,47 @@ const MAP_SPOTS = [
   },
 ];
 
+
+function disablePlanTapZoom() {
+  const viewportMeta = document.querySelector('meta[name="viewport"]');
+  const originalViewportContent = viewportMeta ? viewportMeta.getAttribute("content") || "" : null;
+
+  if (viewportMeta) {
+    const nextContent = originalViewportContent
+      .split(",")
+      .map((part) => part.trim())
+      .filter((part) => !/^maximum-scale=/i.test(part) && !/^user-scalable=/i.test(part))
+      .concat(["maximum-scale=1", "user-scalable=no"])
+      .join(", ");
+    viewportMeta.setAttribute("content", nextContent);
+  }
+
+  let lastTouchEndAt = 0;
+  const preventDoubleTapZoom = (event) => {
+    const now = Date.now();
+    if (now - lastTouchEndAt <= 350) {
+      event.preventDefault();
+    }
+    lastTouchEndAt = now;
+  };
+
+  document.addEventListener("dblclick", preventDefaultEvent, { passive: false });
+  document.addEventListener("touchend", preventDoubleTapZoom, { passive: false });
+
+  return () => {
+    document.removeEventListener("dblclick", preventDefaultEvent);
+    document.removeEventListener("touchend", preventDoubleTapZoom);
+
+    if (viewportMeta && originalViewportContent !== null) {
+      viewportMeta.setAttribute("content", originalViewportContent);
+    }
+  };
+}
+
+function preventDefaultEvent(event) {
+  event.preventDefault();
+}
+
 const planWarmupState = {
   placesPromise: null,
   preloadedBackgrounds: new Set(),
@@ -260,12 +301,29 @@ export async function initPlan() {
     });
   });
 
-  prevButton.addEventListener("click", () => shiftSelection(-1));
-  nextButton.addEventListener("click", () => shiftSelection(1));
+  const goPrev = (event) => {
+    event.preventDefault();
+    shiftSelection(-1);
+  };
+  const goNext = (event) => {
+    event.preventDefault();
+    shiftSelection(1);
+  };
+
+  prevButton.addEventListener("click", goPrev);
+  nextButton.addEventListener("click", goNext);
+
+  const restoreZoomBehavior = disablePlanTapZoom();
 
   if (selectedId) {
     const initialId = selectedId;
     selectedId = "";
     setSelected(initialId);
   }
+
+  return () => {
+    prevButton.removeEventListener("click", goPrev);
+    nextButton.removeEventListener("click", goNext);
+    restoreZoomBehavior();
+  };
 }

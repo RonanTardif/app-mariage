@@ -366,27 +366,32 @@ button, input { font-family: inherit; }
 .map-carousel {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 32px;
-  align-items: center;
-  gap: 6px;
+  grid-template-columns: minmax(36px, 56px) minmax(0, 1fr) minmax(36px, 56px);
+  align-items: stretch;
+  gap: 8px;
 }
 
 .map-carousel-nav {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
+  width: 100%;
+  min-width: 36px;
+  min-height: 140px;
   padding: 0;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.78);
   color: rgba(28, 28, 28, 0.72);
-  font-size: 26px;
+  font-size: 28px;
   line-height: 1;
   box-shadow: none;
+  display: grid;
+  place-items: center;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .map-carousel-nav:hover,
 .map-carousel-nav:focus-visible {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.98);
   color: rgba(28, 28, 28, 0.95);
   transform: none;
 }
@@ -396,16 +401,19 @@ button, input { font-family: inherit; }
   min-height: 140px;
 }
 
+.plan-page,
+.plan-page * {
+  touch-action: manipulation;
+}
+
 @media (max-width: 600px) {
   .map-carousel {
-    grid-template-columns: 28px minmax(0, 1fr) 28px;
-    gap: 4px;
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    gap: 6px;
   }
 
   .map-carousel-nav {
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
+    min-width: 36px;
     font-size: 24px;
   }
 }
