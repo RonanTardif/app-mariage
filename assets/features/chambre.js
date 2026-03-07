@@ -18,8 +18,18 @@ function personLabel(room) {
   return room.display_name || room.full_name || room.person_id || "—";
 }
 
+function normalizeRoomValue(value) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function roomKey(room) {
-  return normalizeName(`${room.building || ""}::${room.room_name || ""}`);
+  return `${normalizeRoomValue(room.building)}::${normalizeRoomValue(room.room_name)}`;
 }
 
 function renderSearchResults(matches) {
