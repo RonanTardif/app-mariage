@@ -56,3 +56,42 @@ cp assets/domaine_de_la_corbe_all_good_black_andwhite.jpg app-react/public/asset
 
 ## Build GitHub Pages
 `vite.config.js` gère un `base` compatible Pages via variables d'environnement (`GITHUB_PAGES`, `GITHUB_REPOSITORY`).
+
+
+## Déploiement GitHub Pages (pas à pas)
+
+### 1) Pré-requis
+- Le dépôt doit être sur GitHub.
+- La branche de référence est `main` (adapte le workflow si tu utilises une autre branche).
+- Les assets binaires doivent être présents localement dans `app-react/public/assets/` avant build.
+
+### 2) Installer le workflow CI/CD
+Un workflow prêt est fourni dans :
+- `.github/workflows/deploy-app-react-pages.yml`
+
+Il va :
+1. installer les dépendances dans `app-react/` (`npm install`),
+2. builder avec `GITHUB_PAGES=true` (pour activer le bon `base` Vite),
+3. publier `app-react/dist` sur GitHub Pages.
+
+### 3) Activer GitHub Pages dans les settings
+Sur GitHub :
+- `Settings` → `Pages`
+- `Build and deployment` → `Source: GitHub Actions`
+
+### 4) Lancer un premier déploiement
+- Push sur `main`, ou lance le workflow manuellement via l’onglet `Actions`.
+- URL attendue : `https://<owner>.github.io/<repo>/app-react/`
+
+### 5) Vérification locale avant push
+```bash
+cd app-react
+npm install
+npm run build
+```
+Puis vérifie que le build contient bien les assets nécessaires.
+
+### 6) Dépannage rapide
+- **Page blanche / assets 404**: vérifier que l’URL inclut bien `/app-react/`.
+- **Workflow échoue sur npm install**: vérifier la présence de `package-lock.json` et la version Node.
+- **Images manquantes**: vérifier la copie manuelle dans `app-react/public/assets/`.
