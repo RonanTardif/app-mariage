@@ -1,0 +1,144 @@
+{
+  "questions": [
+    {
+      "question": "Dans quel pays les mariés ont passé 6 mois et auraient pu se croiser avant même de se connaître ?",
+      "options": ["Canada", "Australie", "Espagne", "Italie"],
+      "answer_index": 1
+    },
+    {
+      "question": "Dans quel cabinet de conseil Cupidon a-t-il frappé ?",
+      "options": ["Accenture", "Velvet Consulting", "Avisia", "Deloitte"],
+      "answer_index": 1
+    },
+    {
+      "question": "Dans quelle ville est née la mariée ?",
+      "options": ["Paris", "Tremblay En France", "Bondy", "Saint Denis"],
+      "answer_index": 1
+    },
+    {
+      "question": "Où vivent aujourd’hui les mariés ?",
+      "options": ["14 rue Paul Vaillant Couturier, 95100 Argenteuil", "41 Cours de Vincennes, 75020 Paris", "8 rue Arthur Rozier, 75019 Paris", "9 rue Joseph Boussin, 35000 Rennes"],
+      "answer_index": 1
+    },
+    {
+      "question": "Dans quel pays rêvent-ils de s’installer un jour ?",
+      "options": ["Canada", "Australie", "États-Unis", "Italie"],
+      "answer_index": 2
+    },
+    {
+      "question": "Dans quelle ville américaine Lorie a-t-elle vécu pendant 4 ans ?",
+      "options": ["Chicago", "Cincinnati", "Miami", "Boston"],
+      "answer_index": 1
+    },
+    {
+      "question": "À quel poste jouait Ronan sur le terrain de foot ?",
+      "options": ["Gardien", "Défenseur", "Milieu", "Attaquant"],
+      "answer_index": 2
+    },
+    {
+      "question": "Où Ronan aime-t-il le plus se ressourcer ?",
+      "options": ["Biarritz", "Saint-Malo", "Annecy", "La Rochelle"],
+      "answer_index": 1
+    },
+    {
+      "question": "Quelle est la nouvelle passion stratégique de Ronan ?",
+      "options": ["Jeux de Go", "Poker", "Les échecs", "Sudoku"],
+      "answer_index": 2
+    },
+    {
+      "question": "Où se sont déroulées les toutes premières vacances des mariés ?",
+      "options": ["Majorque", "L'Aiguillon-sur-Mer", "Ibiza", "Nice"],
+      "answer_index": 1
+    },
+    {
+      "question": "Quelle est la ville coup de cœur des mariés ?",
+      "options": ["Lisbonne", "Matala", "Rome", "Santorin"],
+      "answer_index": 1
+    },
+    {
+      "question": "Dans quel sport Lorie a-t-elle un niveau avancé et Ronan a passé son premier niveau ?",
+      "options": ["Surf", "Plongée", "Voile", "Kitesurf"],
+      "answer_index": 1
+    },
+    {
+      "question": "Quelle pâtisserie Ronan a-t-il réalisée (et ce fut la seule fois !) pour impressionner Lorie ?",
+      "options": ["Tiramisu", "Fraisier", "Éclair au chocolat", "Macarons"],
+      "answer_index": 1
+    },
+    {
+      "question": "Quel est le premier film que les mariés sont allés voir ensemble au cinéma ?",
+      "options": ["1917", "J'accuse", "Parasite", "Le Chant du Loup"],
+      "answer_index": 1
+    },
+    {
+      "question": "Quel surnom, né spontanément dans l’entourage des mariés, est utilisé pour les désigner tous les deux ?",
+      "options": ["Loran", "Roli", "Rolan", "Loran et Roli"],
+      "answer_index": 0
+    },
+    {
+      "question": "Qui appelle-t-on « les alcolytes », connus pour être inarrêtables lorsqu’ils sont tous les deux ?",
+      "options": ["Lorie et son beau-frère Clément", "Ronan et sa belle-sœur Léa", "Lorie et sa belle-sœur Nolwenn", "Ronan et son beau-frère Quentin"],
+      "answer_index": 0
+    },
+    {
+      "question": "Dans quelles organisations travaillent respectivement Lorie et Ronan ?",
+      "options": ["BNP Paribas / Capgemini", "Action Contre La Faim / LVMH", "Fondation de France / Octo Technology", "UNICEF / Google"],
+      "answer_index": 2
+    },
+    {
+      "question": "Quel est le petit-déjeuner fétiche du marié pour bien commencer la journée ?",
+      "options": ["Croissant et café", "Omelette et bacon", "Smoothie protéiné uniquement", "Skyr, pommes, peanut butter et céréales"],
+      "answer_index": 3
+    },
+    {
+      "question": "Quelle est la date officielle du début de la relation des mariés ?",
+      "options": ["12 janvier 2019", "5 juin 2019", "30 septembre 2019", "19 novembre 2019"],
+      "answer_index": 3
+    },
+    {
+      "question": "Où les mariés se sont-ils embrassés pour la toute première fois ?",
+      "options": ["Dans un parc à Paris", "Sur le quai de la gare Saint-Lazare", "Devant le cinéma", "Au restaurant"],
+      "answer_index": 1
+    },
+    {
+      "question": "Où Ronan a-t-il fait sa demande en mariage à Lorie ?",
+      "options": ["La Havane", "Kingston", "Bridgetown", "Punta Cana"],
+      "answer_index": 3
+    },
+    {
+      "question": "Quel type de danse Lorie a-t-elle pratiqué ?",
+      "options": ["Tango", "Salsa", "Hip-hop", "Valse"],
+      "answer_index": 1
+    },
+    {
+      "question": "Qu'est-ce que Ronan a oublié lors d'un roadtrip en Crète avec Lorie, et dont il s'est rendu compte à l'aéroport juste avant le décollage ?",
+      "options": ["Son portefeuille", "Ses lunettes de soleil", "Son téléphone", "Son permis de conduire"],
+      "answer_index": 3
+    },
+    {
+      "question": "Dans quel sport les mariés ont-ils suivi un cours collectif réservé uniquement aux enfants de moins de 10 ans ?",
+      "options": ["Natation", "Tennis", "Voile", "Equitation"],
+      "answer_index": 2
+    },
+    {
+      "question": "Quel est le jeu de société préféré de Lorie ?",
+      "options": ["Trivial Pursuit", "Scrabble", "Cluedo", "Monopoly"],
+      "answer_index": 0
+    },
+    {
+      "question": "Quelle série TV a été le thème d'une surprise organisée par Lorie, pensant à tort que Ronan en était fan ?",
+      "options": ["The Witcher", "Game of Thrones", "Breaking Bad", "Stranger Things"],
+      "answer_index": 3
+    },
+    {
+      "question": "Quelle est la viennoiserie préférée de Lorie ?",
+      "options": ["Croissant", "Pain au chocolat", "Chausson aux pommes", "Pain suisse"],
+      "answer_index": 3
+    },
+    {
+      "question": "Dans quelle ville, lors d’un séminaire d’entreprise, les mariés se sont-ils parlé pour la première fois ?",
+      "options": ["Budapest", "Prague", "Berlin", "Vienne"],
+      "answer_index": 1
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+[
+  {
+    "id": "chateau",
+    "title": "Le Château",
+    "description": "Vous pouvez visiter et profiter des salons du château. Un billard ou une partie d’échecs ?",
+    "links": [{ "label": "Trouver ma chambre", "href": "#/chambre" }]
+  },
+  {
+    "id": "gites",
+    "title": "Les Gîtes",
+    "description": "C’est aussi le plan B abrité pour le Vin d’Honneur.",
+    "links": [{ "label": "Trouver ma chambre", "href": "#/chambre" }]
+  },
+  {
+    "id": "refresh",
+    "title": "Le coin rafraîchissement",
+    "description": "Ouvert le samedi à votre arrivée sur le domaine. Servez-vous un jus détox ou un sirop, et profitez des chaises pour souffler."
+  },
+  {
+    "id": "vin",
+    "title": "Le Vin d’Honneur",
+    "description": "Ici se déroulera le vin d’honneur de 17h à 20h."
+  },
+  {
+    "id": "chapelle",
+    "title": "La Chapelle",
+    "description": "Venez nous laisser un petit mot dans notre bouteille à souvenirs."
+  },
+  {
+    "id": "saloon",
+    "title": "Le Saloon",
+    "description": "After (après 4h) pour les plus courageux. Brunch du dimanche à partir de 11h."
+  },
+  {
+    "id": "orangerie",
+    "title": "L’Orangerie",
+    "description": "Ouverture à partir de 20h pour faire la fête jusqu’au bout de la nuit."
+  },
+  {
+    "id": "jardin",
+    "title": "Le jardin Français",
+    "description": "Balade + molky ou palet vendéen."
+  },
+  {
+    "id": "lac",
+    "title": "Le lac",
+    "description": "Très sympa pour une balade. C’est ici que se dérouleront les photos de groupe."
+  },
+  {
+    "id": "foret",
+    "title": "La forêt",
+    "description": "Elle appartient au domaine : n’hésitez pas à faire votre petite balade du dimanche matin."
+  },
+  {
+    "id": "piscine",
+    "title": "La piscine",
+    "description": "Fermée samedi. Ouverture dimanche à 10h. Pool Party dimanche à partir de 14h. N’oublie pas ton maillot !"
+  }
+]
