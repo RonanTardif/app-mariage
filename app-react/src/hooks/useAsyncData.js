@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 export function useAsyncData(loader, deps = []) {
+  const [version, setVersion] = useState(0)
   const [state, setState] = useState({ data: null, loading: true, error: null })
 
   useEffect(() => {
@@ -12,7 +13,9 @@ export function useAsyncData(loader, deps = []) {
     return () => {
       mounted = false
     }
-  }, deps)
+  }, [...deps, version])
 
-  return state
+  const refetch = useCallback(() => setVersion((v) => v + 1), [])
+
+  return { ...state, refetch }
 }

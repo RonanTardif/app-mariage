@@ -7,7 +7,7 @@ const navItems = [
   { to: '/programme', label: 'Programme' },
   { to: '/plan', label: 'Plan' },
   { to: '/chambres', label: 'Chambres' },
-  { to: '/photos', label: 'Photos' },
+  { to: '/album', label: 'Album' },
 ]
 
 export function AppShell({ children }) {
