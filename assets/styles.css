@@ -60,12 +60,8 @@ button, input { font-family: inherit; }
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, rgba(232, 191, 199, 1), rgba(155, 170, 154, 1));
-  color: white;
-  font-weight: 800;
-  letter-spacing: 0.5px;
+  display: block;
+  object-fit: cover;
   box-shadow: var(--shadow);
 }
 
